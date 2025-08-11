@@ -1,103 +1,82 @@
-import Image from "next/image";
+'use client';
+
+import { useEffect } from 'react';
+import { useWallet } from '@solana/wallet-adapter-react';
+import WalletProviderWrapper from '@/components/WalletProvider';
+import Navbar from '@/components/Navbar';
+import PixelBoard from '@/components/PixelBoard';
+import Chat from '@/components/Chat';
+import Leaderboard from '@/components/Leaderboard';
+import ToastContainer from '@/components/Toast';
+import ColorPicker from '@/components/ColorPicker';
+import BuyPixelsModal from '@/components/BuyPixelsModal';
+import FeaturedArtworksModal from '@/components/FeaturedArtworksModal';
+import useGameStore from '@/store/gameStore';
+
+function GameContent() {
+  const { publicKey, connected } = useWallet();
+  const { setUser, addToast } = useGameStore();
+
+  useEffect(() => {
+    if (connected && publicKey) {
+      // Simulate user login/creation
+      const mockUser = {
+        wallet_address: publicKey.toString(),
+        free_pixels: 5, // Initial free pixels
+        total_pixels_placed: 0,
+        total_tokens_burned: 0,
+        created_at: new Date(),
+        updated_at: new Date(),
+      };
+      
+      setUser(mockUser);
+      addToast({
+        message: `Welcome to Pixey! You have 5 free pixels to start.`,
+        type: 'success',
+      });
+    } else {
+      setUser(null);
+    }
+  }, [connected, publicKey, setUser, addToast]);
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900">
+      {/* Toast Container */}
+      <ToastContainer />
+      
+      {/* Navbar */}
+      <Navbar />
+      
+      {/* Main Game Layout */}
+      <div className="flex h-[calc(100vh-80px)]">
+        {/* Left Sidebar - Leaderboard */}
+        <div className="w-80 p-4 bg-gray-900/50 backdrop-blur-sm border-r border-purple-500/20 overflow-y-auto">
+          <Leaderboard />
+        </div>
+        
+        {/* Center - Pixel Board */}
+        <div className="flex-1 p-4">
+          <PixelBoard className="w-full h-full" />
+        </div>
+        
+        {/* Right Sidebar - Chat */}
+        <div className="w-80 p-4 bg-gray-900/50 backdrop-blur-sm border-l border-purple-500/20">
+          <Chat className="h-full" />
+        </div>
+      </div>
+      
+      {/* Modals */}
+      <ColorPicker />
+      <BuyPixelsModal />
+      <FeaturedArtworksModal />
+    </div>
+  );
+}
 
 export default function Home() {
   return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+    <WalletProviderWrapper>
+      <GameContent />
+    </WalletProviderWrapper>
   );
 }

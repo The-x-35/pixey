@@ -1,0 +1,125 @@
+You are an expert senior full-stack engineer with deep experience in Next.js, TypeScript, Solana Web3.js, React state management, PostgreSQL, and high-quality UI/UX design. 
+You write clean, maintainable code with proper architecture, reusable components, and excellent developer documentation. 
+
+Build a complete Next.js + TypeScript project called "Pixey" — a Web3 pixel art game inspired by Reddit's r/place — with the following specifications:
+
+====================================================
+## CORE GAME FEATURES
+
+### 1. Pixel Board
+- Start with a 200x200 pixel grid.
+- Each pixel can be colored by a user burning 1 $VIBEY SPL token on Solana.
+- Progressive board size unlocks based on burn milestones:
+  - Stage 1: 200x200
+  - Stage 2: 500x500
+  - Stage 3: 1000x1000 (max)
+- Track cumulative tokens burned toward the target.
+- Board state updates in real-time via WebSockets or Supabase Realtime.
+
+### 2. Burn Mechanism
+- Integrate with Solana via @solana/web3.js and @solana/spl-token.
+- Use constants for RPC endpoint, contract address, and token mint address (`src/constants.ts`).
+- Implement burn transaction with confirmation handling.
+- Allow:
+  - Single pixel burns (1 token = 1 pixel)
+  - Bulk pixel burns (e.g., burn 100 $VIBEY = 120 pixels; discount logic configurable)
+
+### 3. User Accounts & Free Pixels
+- Wallet connect login only (no email/password).
+- Store each user in PostgreSQL using wallet address as the primary key.
+- Prefix all project-related DB tables with `pixey_` to avoid conflict with existing data.
+- On first login, give every wallet 5 free pixels (stored in DB).
+- you need store current colour of each pixel in db 
+
+### 4. Leaderboards & Chat
+- Left sidebar:
+  - Burn progress: e.g., "20 / 20,000 $VIBEY burned"
+  - Leaderboard: Top 10 wallets by pixels placed.
+- Right sidebar:
+  - Live chatbox with messages tied to wallet usernames.
+  - Real-time updates (WebSocket or Supabase Realtime).
+
+### 5. Live Toasts
+- Pump.fun-style animated toasts in bright colors.
+- Show at most 2 at a time, auto-remove as new ones arrive.
+- Example: "@username placed a pixel at (x, y)"
+
+### 6. Featured Artworks
+- Admin panel to upload and manage featured artworks (images stored in DB).
+- Display:
+  - Button in navbar to open a "treasure chest"-style popup with artworks.
+  - Dedicated "Gallery" page.
+
+====================================================
+## LAYOUT SPECIFICATIONS
+
+### Navbar (left → right)
+1. Logo: "Pixey by VibeGame"
+2. Two animated live toasts (pump.fun style)
+3. "Good Artworks" button → opens popup with featured artworks
+4. "Buy Pixels" button → opens modal to burn $VIBEY and add pixels; show current pixel balance beside button
+5. "Connect Wallet" button → also triggers wallet-based login
+
+### Main Page Layout
+- **Left column:**
+  - Burn progress tracker ("X / Y $VIBEY burned")
+  - Leaderboard (Top 10 wallets by pixels placed)
+- **Center column:**
+  - Main pixel board (zoomable, pannable)
+  - Click pixel → show color palette + "Place Pixel" button
+  - Reduce pixel balance in DB after placement
+- **Right column:**
+  - Live chatbox with real-time updates
+
+====================================================
+## TECHNICAL REQUIREMENTS
+
+- Framework: Next.js (latest) + TypeScript + React
+- Styling: Tailwind CSS + shadcn/ui
+- State management: Zustand or Recoil
+- Database: PostgreSQL (with `pixey_` prefixed tables)
+- Backend API routes for:
+  - Burn transactions
+  - Board state retrieval
+  - Leaderboard data
+  - Chat messages
+- Constants: RPC endpoint, contract address, token mint address → in `src/constants.ts`
+- Environment variables in `.env` (provide `.env.example`)
+- Folder structure:
+  - `/components` → Reusable UI elements
+  - `/pages` or `/app` → Pages
+  - `/lib` → Solana utils, API wrappers
+  - `/constants` → Contract addresses, RPC, configs
+  - `/types` → TypeScript interfaces
+
+====================================================
+## UI/UX REQUIREMENTS
+
+- Fully responsive, mobile-first.
+- Pixel board:
+  - Zoomable and pannable.
+  - Smooth hover/click animations.
+- Leaderboards: Tabbed UI for “Players” and future “Communities”.
+- Toasts: Small, non-blocking, stacked top-right.
+- Bright, game-like color palette; readable typography.
+
+====================================================
+## CODE QUALITY
+
+- TypeScript everywhere (strict mode on).
+- Small, reusable components.
+- Business logic separated from UI.
+- Document all utility functions and API endpoints.
+- All Solana calls:
+  - Proper error handling
+  - Retry logic
+  - User-friendly error messages
+
+====================================================
+## DELIVERABLES
+
+- Fully working Next.js app with all features implemented.
+- Clean, maintainable, production-ready code.
+- Dummy token/contract for local testing.
+- Ready to deploy to Vercel.
+- `.env.example` with all required configs.
