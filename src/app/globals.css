@@ -24,3 +24,38 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Fix wallet adapter dropdown visibility - ensure it's above everything including backdrop-blur elements */
+.wallet-adapter-dropdown {
+  z-index: 99999 !important;
+  position: relative !important;
+}
+
+.wallet-adapter-dropdown-list {
+  z-index: 100000 !important;
+  position: absolute !important;
+}
+
+/* Ensure wallet adapter button and all its children have high z-index */
+.wallet-adapter-button-wrapper {
+  z-index: 99998 !important;
+  position: relative !important;
+}
+
+/* Force wallet adapter modal to be above everything */
+.wallet-adapter-modal {
+  z-index: 999999 !important;
+}
+
+/* Ensure dropdown items are visible */
+.wallet-adapter-dropdown-list-item {
+  z-index: 100001 !important;
+}
+
+/* Override any backdrop-blur stacking context issues */
+.wallet-adapter-dropdown,
+.wallet-adapter-dropdown-list,
+.wallet-adapter-dropdown-list-item,
+.wallet-adapter-button-wrapper {
+  isolation: isolate !important;
+}

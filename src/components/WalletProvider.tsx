@@ -18,7 +18,7 @@ import {
 import { clusterApiUrl } from '@solana/web3.js';
 import { SOLANA_RPC_ENDPOINT } from '@/constants';
 
-// Import wallet adapter CSS
+// Import wallet adapter CSS for base styles
 require('@solana/wallet-adapter-react-ui/styles.css');
 
 interface WalletProviderWrapperProps {

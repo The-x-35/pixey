@@ -14,17 +14,18 @@ import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
   createAssociatedTokenAccountInstruction,
   getAccount,
+  getMint,
 } from '@solana/spl-token';
-import { SOLANA_RPC_ENDPOINT, VIBEY_TOKEN_MINT, BURN_PROGRAM_ID, BULK_BURN_DISCOUNTS } from '@/constants';
+import { SOLANA_RPC_ENDPOINT, BULK_BURN_DISCOUNTS } from '@/constants';
 
 // Initialize Solana connection
 export const connection = new Connection(SOLANA_RPC_ENDPOINT, 'confirmed');
 
 // Utility functions
-export const getTokenBalance = async (walletAddress: PublicKey): Promise<number> => {
+export const getTokenBalance = async (walletAddress: PublicKey, tokenMint: PublicKey): Promise<number> => {
   try {
     const associatedTokenAddress = await getAssociatedTokenAddress(
-      VIBEY_TOKEN_MINT,
+      tokenMint,
       walletAddress
     );
     
@@ -74,47 +75,52 @@ export const calculatePixelsFromBurn = (tokenAmount: number): number => {
 
 export const createBurnTransaction = async (
   walletAddress: PublicKey,
-  tokenAmount: number
+  tokenMint: PublicKey,
+  tokenAmount: number,
+  rpcEndpoint?: string
 ): Promise<Transaction> => {
   try {
+    const connectionToUse = rpcEndpoint ? new Connection(rpcEndpoint, 'confirmed') : connection;
+    
+    // Get the owner's Associated Token Address
+    const ownerAta = await getAssociatedTokenAddress(tokenMint, walletAddress);
+    
+    // Check if the token account exists
+    const ataInfo = await connectionToUse.getAccountInfo(ownerAta);
+    
     const transaction = new Transaction();
     
-    // Get the associated token account for the wallet
-    const associatedTokenAddress = await getAssociatedTokenAddress(
-      VIBEY_TOKEN_MINT,
-      walletAddress
-    );
-    
-    // Check if the associated token account exists
-    try {
-      await getAccount(connection, associatedTokenAddress);
-    } catch (error) {
-      // If account doesn't exist, create it
-      const createAccountInstruction = createAssociatedTokenAccountInstruction(
-        walletAddress, // payer
-        associatedTokenAddress, // associated token account
-        walletAddress, // owner
-        VIBEY_TOKEN_MINT, // mint
-        TOKEN_PROGRAM_ID,
-        ASSOCIATED_TOKEN_PROGRAM_ID
+    // Create owner's ATA if it doesn't exist
+    if (!ataInfo) {
+      transaction.add(
+        createAssociatedTokenAccountInstruction(
+          walletAddress,  // payer
+          ownerAta,       // ATA address
+          walletAddress,  // owner
+          tokenMint       // mint
+        )
       );
-      transaction.add(createAccountInstruction);
     }
     
-    // Create burn instruction
-    const burnInstruction = createBurnInstruction(
-      associatedTokenAddress, // account to burn from
-      VIBEY_TOKEN_MINT, // mint
-      walletAddress, // owner
-      tokenAmount * Math.pow(10, 9), // amount (assuming 9 decimals)
-      [], // multiSigners
-      TOKEN_PROGRAM_ID
-    );
+    // Get token decimals and adjust amount
+    const mintInfo = await getMint(connectionToUse, tokenMint);
+    const adjustedAmount = Math.floor(tokenAmount * Math.pow(10, mintInfo.decimals));
     
-    transaction.add(burnInstruction);
+    // Only add burn instruction if we actually have an amount to burn
+    if (adjustedAmount > 0) {
+      // Add burn instruction
+      transaction.add(
+        createBurnInstruction(
+          ownerAta,       // token account to burn from
+          tokenMint,      // mint address
+          walletAddress,  // owner of the token account
+          adjustedAmount  // amount to burn (adjusted for decimals)
+        )
+      );
+    }
     
-    // Get recent blockhash
-    const { blockhash } = await connection.getLatestBlockhash();
+    // Set recent blockhash and fee payer
+    const { blockhash } = await connectionToUse.getLatestBlockhash();
     transaction.recentBlockhash = blockhash;
     transaction.feePayer = walletAddress;
     
@@ -212,4 +218,91 @@ export const formatTokenAmount = (amount: number): string => {
 export const formatWalletAddress = (address: string): string => {
   if (address.length <= 8) return address;
   return `${address.slice(0, 4)}...${address.slice(-4)}`;
+};
+
+// Complete burn token implementation
+export const burnTokens = async (
+  walletSignTransaction: (transaction: Transaction) => Promise<Transaction>,
+  ownerPubkey: string,
+  mint: string,
+  amount: number,
+  rpcEndpoint?: string
+): Promise<{ signature: string }> => {
+  try {
+    if (!walletSignTransaction) {
+      throw new Error('No wallet connected');
+    }
+
+    const connectionToUse = new Connection(rpcEndpoint || SOLANA_RPC_ENDPOINT, 'confirmed');
+    const ownerKey = new PublicKey(ownerPubkey);
+    const mintKey = new PublicKey(mint);
+    
+    // Get the owner's Associated Token Address
+    const ownerAta = await getAssociatedTokenAddress(mintKey, ownerKey);
+    
+    // Check if the token account exists
+    const ataInfo = await connectionToUse.getAccountInfo(ownerAta);
+    
+    const transaction = new Transaction();
+    
+    // Create owner's ATA if it doesn't exist
+    if (!ataInfo) {
+      transaction.add(
+        createAssociatedTokenAccountInstruction(
+          ownerKey,  // payer
+          ownerAta,  // ATA address
+          ownerKey,  // owner
+          mintKey    // mint
+        )
+      );
+    }
+    
+    // Get token decimals and adjust amount
+    const mintInfo = await getMint(connectionToUse, mintKey);
+    const adjustedAmount = Math.floor(amount * Math.pow(10, mintInfo.decimals));
+    
+    // Only add burn instruction if we actually have an amount to burn
+    if (adjustedAmount > 0) {
+      // Add burn instruction
+      transaction.add(
+        createBurnInstruction(
+          ownerAta,       // token account to burn from
+          mintKey,        // mint address
+          ownerKey,       // owner of the token account
+          adjustedAmount  // amount to burn (adjusted for decimals)
+        )
+      );
+    }
+    
+    // Set recent blockhash and fee payer
+    const { blockhash } = await connectionToUse.getLatestBlockhash();
+    transaction.recentBlockhash = blockhash;
+    transaction.feePayer = ownerKey;
+    
+    // Validate transaction has instructions
+    if (transaction.instructions.length === 0) {
+      return { signature: 'no-transaction-needed' };
+    }
+    
+    // Sign transaction
+    const signedTransaction = await walletSignTransaction(transaction);
+    
+    // Send transaction
+    const signature = await connectionToUse.sendRawTransaction(signedTransaction.serialize(), {
+      preflightCommitment: 'processed'
+    });
+    
+    // Wait for confirmation
+    const latestBlockhash = await connectionToUse.getLatestBlockhash();
+    await connectionToUse.confirmTransaction({
+      signature,
+      blockhash: latestBlockhash.blockhash,
+      lastValidBlockHeight: latestBlockhash.lastValidBlockHeight
+    });
+    
+    return { signature };
+  } catch (error) {
+    console.error('Error burning tokens:', error);
+    throw error;
+  }
 };

@@ -29,11 +29,60 @@ export default function PixelBoard({ className }: PixelBoardProps) {
     setSelectedPixel,
     selectedColor,
     toggleModal,
+    updatePixelBoard,
+    updateGameSettings,
   } = useGameStore();
 
   const PIXEL_SIZE = 10;
-  const MIN_SCALE = 0.1;
+  const MIN_SCALE = 0.23; // Allow zooming out to 10% to see the entire board
   const MAX_SCALE = 10;
+
+  // Fetch pixels from database continuously
+  const fetchPixels = useCallback(async () => {
+    try {
+      const response = await fetch('/api/pixels');
+      const result = await response.json();
+      
+      if (result.success) {
+        updatePixelBoard(result.data.pixels);
+      }
+    } catch (error) {
+      console.error('Error fetching pixels:', error);
+    }
+  }, [updatePixelBoard]);
+
+  // Fetch game settings to update board size and stage
+  const fetchGameSettings = useCallback(async () => {
+    try {
+      const response = await fetch('/api/game-settings');
+      const result = await response.json();
+      
+      if (result.success) {
+        const { currentStage, totalBurned, boardSize } = result.data;
+        
+        // Update the game settings in the store
+        updateGameSettings(currentStage, totalBurned, boardSize);
+      }
+    } catch (error) {
+      console.error('Error fetching game settings:', error);
+    }
+  }, [updateGameSettings]);
+
+  // Fetch data on component mount and set up intervals
+  useEffect(() => {
+    // Initial fetch
+    fetchPixels();
+    fetchGameSettings();
+    
+    // Set up intervals for real-time updates
+    const pixelInterval = setInterval(fetchPixels, 2000); // Every 2 seconds
+    const settingsInterval = setInterval(fetchGameSettings, 5000); // Every 5 seconds
+    
+    return () => {
+      clearInterval(pixelInterval);
+      clearInterval(settingsInterval);
+    };
+  }, [fetchPixels, fetchGameSettings]);
 
   // Convert screen coordinates to grid coordinates
   const screenToGrid = useCallback((screenX: number, screenY: number) => {
@@ -174,33 +223,46 @@ export default function PixelBoard({ className }: PixelBoardProps) {
     setIsDragging(false);
   }, []);
 
-  // Handle wheel for zooming
+  // Handle wheel for panning
   const handleWheel = useCallback((event: React.WheelEvent) => {
     event.preventDefault();
-
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const rect = canvas.getBoundingClientRect();
-    const mouseX = event.clientX - rect.left;
-    const mouseY = event.clientY - rect.top;
-
-    const zoomFactor = event.deltaY > 0 ? 0.9 : 1.1;
-    const newScale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, viewport.scale * zoomFactor));
-
-    if (newScale !== viewport.scale) {
-      // Zoom towards mouse position
-      const scaleRatio = newScale / viewport.scale;
-      const newOffsetX = mouseX - (mouseX - viewport.offsetX) * scaleRatio;
-      const newOffsetY = mouseY - (mouseY - viewport.offsetY) * scaleRatio;
-
-      setViewport({
-        scale: newScale,
+    
+    // Use scroll wheel to pan around the board
+    const scrollSpeed = 1.5; // Adjust this value to control scroll sensitivity
+    
+    setViewport(prev => {
+      const newOffsetX = prev.offsetX - event.deltaX * scrollSpeed;
+      const newOffsetY = prev.offsetY - event.deltaY * scrollSpeed;
+      
+      // Constrain panning to keep board visible and reduce excessive empty space
+      const canvas = canvasRef.current;
+      const container = containerRef.current;
+      if (canvas && container) {
+        const rect = container.getBoundingClientRect();
+        const boardWidth = pixelBoard.boardSize * PIXEL_SIZE * prev.scale;
+        const boardHeight = pixelBoard.boardSize * PIXEL_SIZE * prev.scale;
+        
+        // Limit how far users can scroll away from the board
+        // Allow some space for navigation but prevent excessive empty space
+        const maxOffsetX = rect.width + 200; // Allow 200px extra space
+        const maxOffsetY = rect.height + 200;
+        const minOffsetX = -boardWidth - 200;
+        const minOffsetY = -boardHeight - 200;
+        
+        return {
+          ...prev,
+          offsetX: Math.max(minOffsetX, Math.min(maxOffsetX, newOffsetX)),
+          offsetY: Math.max(minOffsetY, Math.min(maxOffsetY, newOffsetY)),
+        };
+      }
+      
+      return {
+        ...prev,
         offsetX: newOffsetX,
         offsetY: newOffsetY,
-      });
-    }
-  }, [viewport]);
+      };
+    });
+  }, [pixelBoard.boardSize]);
 
   // Resize canvas to match container
   const resizeCanvas = useCallback(() => {
@@ -259,18 +321,20 @@ export default function PixelBoard({ className }: PixelBoardProps) {
         <button
           onClick={() => setViewport(prev => ({ 
             ...prev, 
-            scale: Math.min(MAX_SCALE, prev.scale * 1.2) 
+            scale: Math.min(MAX_SCALE, prev.scale * 1.5) 
           }))}
           className="bg-purple-600 hover:bg-purple-700 text-white p-2 rounded-full shadow-lg transition-colors"
+          title="Zoom In"
         >
           +
         </button>
         <button
           onClick={() => setViewport(prev => ({ 
             ...prev, 
-            scale: Math.max(MIN_SCALE, prev.scale * 0.8) 
+            scale: Math.max(MIN_SCALE, prev.scale / 1.5) 
           }))}
           className="bg-purple-600 hover:bg-purple-700 text-white p-2 rounded-full shadow-lg transition-colors"
+          title="Zoom Out"
         >
           -
         </button>
@@ -291,6 +355,7 @@ export default function PixelBoard({ className }: PixelBoardProps) {
             });
           }}
           className="bg-purple-600 hover:bg-purple-700 text-white p-2 rounded text-xs font-medium shadow-lg transition-colors"
+          title="Reset View"
         >
           Reset
         </button>

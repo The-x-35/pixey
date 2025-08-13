@@ -67,6 +67,17 @@ const useGameStore = create<GameStore>()(
       
       set({ pixelBoard: newBoard });
     },
+
+    updateGameSettings: (currentStage: number, totalBurned: number, boardSize: number) => {
+      set(state => ({
+        pixelBoard: {
+          ...state.pixelBoard,
+          currentStage: currentStage as 1 | 2 | 3,
+          totalBurned,
+          boardSize,
+        }
+      }));
+    },
     
     setSelectedPixel: (pixel: { x: number; y: number } | null) => {
       set({ selectedPixel: pixel });
@@ -216,13 +227,12 @@ const useGameStore = create<GameStore>()(
       }
       
       try {
-        // This will be implemented with actual Solana transaction
         state.addToast({
           message: 'Burn transaction initiated...',
           type: 'info',
         });
         
-        // Call API to process burn
+        // Call API to process burn with actual transaction
         const response = await fetch('/api/burn-tokens', {
           method: 'POST',
           headers: {

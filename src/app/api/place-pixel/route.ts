@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { db } from '@/lib/database';
 
 export async function POST(request: NextRequest) {
   try {
@@ -12,28 +13,83 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
-    // TODO: Implement database operations
-    // 1. Check if user has available pixels
-    // 2. Update pixel in database
-    // 3. Decrease user's pixel count
-    // 4. Update leaderboard
-    // 5. Broadcast update via WebSocket/Supabase Realtime
+    // Start transaction
+    const client = await db.getClient();
+    
+    try {
+      await client.query('BEGIN');
 
-    // Mock response for now
-    const mockResponse = {
-      success: true,
-      data: {
-        pixel: { x, y, color, wallet_address, placed_at: new Date() },
-        user_pixels_remaining: 4, // Mock remaining pixels
-      },
-    };
+      // 1. Check if user has available pixels
+      const userResult = await client.query(
+        'SELECT free_pixels FROM pixey_users WHERE wallet_address = $1',
+        [wallet_address]
+      );
 
-    return NextResponse.json(mockResponse);
+      if (userResult.rows.length === 0) {
+        throw new Error('User not found');
+      }
+
+      const user = userResult.rows[0];
+      if (user.free_pixels <= 0) {
+        throw new Error('No pixels available');
+      }
+
+      // 2. Place pixel (handles conflicts with UNIQUE constraint)
+      await client.query(`
+        INSERT INTO pixey_pixels (x_coordinate, y_coordinate, color, wallet_address) 
+        VALUES ($1, $2, $3, $4)
+        ON CONFLICT (x_coordinate, y_coordinate) 
+        DO UPDATE SET color = $3, wallet_address = $4, placed_at = NOW()
+      `, [x, y, color, wallet_address]);
+
+      // 3. Update user stats
+      await client.query(`
+        UPDATE pixey_users 
+        SET free_pixels = free_pixels - 1,
+            updated_at = NOW()
+        WHERE wallet_address = $1
+      `, [wallet_address]);
+
+      // 4. Record pixel history
+      await client.query(`
+        INSERT INTO pixey_pixel_history (x_coordinate, y_coordinate, new_color, wallet_address)
+        VALUES ($1, $2, $3, $4)
+      `, [x, y, color, wallet_address]);
+
+      await client.query('COMMIT');
+
+      // 5. Get updated user data
+      const updatedUser = await client.query(
+        'SELECT free_pixels FROM pixey_users WHERE wallet_address = $1',
+        [wallet_address]
+      );
+
+      return NextResponse.json({
+        success: true,
+        data: {
+          pixel: { x, y, color, wallet_address, placed_at: new Date() },
+          user_pixels_remaining: updatedUser.rows[0].free_pixels,
+        },
+      });
+
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
+
   } catch (error) {
     console.error('Error placing pixel:', error);
+    
+    let errorMessage = 'Failed to place pixel';
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    }
+
     return NextResponse.json({
       success: false,
-      error: 'Internal server error',
+      error: errorMessage,
     }, { status: 500 });
   }
 }

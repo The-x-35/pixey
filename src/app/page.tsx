@@ -19,21 +19,53 @@ function GameContent() {
 
   useEffect(() => {
     if (connected && publicKey) {
-      // Simulate user login/creation
-      const mockUser = {
-        wallet_address: publicKey.toString(),
-        free_pixels: 5, // Initial free pixels
-        total_pixels_placed: 0,
-        total_tokens_burned: 0,
-        created_at: new Date(),
-        updated_at: new Date(),
+      // Create or get user from database
+      const createOrGetUser = async () => {
+        try {
+          const response = await fetch('/api/users', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              wallet_address: publicKey.toString(),
+            }),
+          });
+
+          const result = await response.json();
+          
+          if (result.success) {
+            const userData = result.data.user;
+            setUser(userData);
+            
+            if (result.data.isNewUser) {
+              addToast({
+                message: `Welcome to Pixey! You have ${userData.free_pixels} free pixels to start.`,
+                type: 'success',
+              });
+            } else {
+              addToast({
+                message: `Welcome back! You have ${userData.free_pixels} pixels available.`,
+                type: 'info',
+              });
+            }
+          } else {
+            console.error('Failed to create/get user:', result.error);
+            addToast({
+              message: 'Failed to connect wallet. Please try again.',
+              type: 'error',
+            });
+          }
+        } catch (error) {
+          console.error('Error creating/getting user:', error);
+          addToast({
+            message: 'Failed to connect wallet. Please try again.',
+            type: 'error',
+          });
+        }
       };
-      
-      setUser(mockUser);
-      addToast({
-        message: `Welcome to Pixey! You have 5 free pixels to start.`,
-        type: 'success',
-      });
+
+      createOrGetUser();
     } else {
       setUser(null);
     }

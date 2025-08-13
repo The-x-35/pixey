@@ -1,50 +1,44 @@
 import { NextResponse } from 'next/server';
+import { db } from '@/lib/database';
 
 export async function GET() {
   try {
-    // TODO: Implement database query for featured artworks
-    // Return artworks where is_featured = true ordered by created_at DESC
-
-    // Mock featured artworks for now
-    const mockArtworks = [
-      {
-        id: '1',
-        title: 'Pixel Sunset',
-        description: 'A beautiful sunset created with vibrant orange and pink pixels, showcasing the collaborative spirit of the Pixey community.',
-        image_url: '/api/placeholder/400/400',
-        creator_wallet: 'ABC123def456GHI789jkl012MNO345pqr678STU901',
-        created_at: new Date('2024-01-15'),
-        is_featured: true,
-      },
-      {
-        id: '2',
-        title: 'Digital Mandala',
-        description: 'Intricate geometric patterns forming a mesmerizing mandala, demonstrating the artistic potential of pixel art.',
-        image_url: '/api/placeholder/400/400',
-        creator_wallet: 'DEF456ghi789JKL012mno345PQR678stu901VWX234',
-        created_at: new Date('2024-01-20'),
-        is_featured: true,
-      },
-      {
-        id: '3',
-        title: 'Crypto Mosaic',
-        description: 'A stunning mosaic representing the fusion of art and blockchain technology.',
-        image_url: '/api/placeholder/400/400',
-        creator_wallet: 'GHI789jkl012MNO345pqr678STU901vwx234YZA567',
-        created_at: new Date('2024-01-25'),
-        is_featured: true,
-      },
-    ];
+    // Get featured artworks ordered by created_at DESC
+    const result = await db.query(`
+      SELECT 
+        fa.id,
+        fa.title,
+        fa.description,
+        fa.image_url,
+        fa.creator_wallet,
+        u.username,
+        fa.start_x,
+        fa.start_y,
+        fa.end_x,
+        fa.end_y,
+        fa.is_featured,
+        fa.created_at
+      FROM pixey_featured_artworks fa
+      LEFT JOIN pixey_users u ON fa.creator_wallet = u.wallet_address
+      WHERE fa.is_featured = true
+      ORDER BY fa.created_at DESC
+    `);
 
     return NextResponse.json({
       success: true,
-      data: mockArtworks,
+      data: result.rows,
     });
   } catch (error) {
     console.error('Error fetching featured artworks:', error);
+    
+    let errorMessage = 'Failed to fetch featured artworks';
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    }
+
     return NextResponse.json({
       success: false,
-      error: 'Internal server error',
+      error: errorMessage,
     }, { status: 500 });
   }
 }

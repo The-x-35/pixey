@@ -1,12 +1,13 @@
 'use client';
 
 import { useState } from 'react';
+import { useWallet } from '@solana/wallet-adapter-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Flame, Zap, Star, Crown } from 'lucide-react';
 import useGameStore from '@/store/gameStore';
 import { BULK_BURN_DISCOUNTS } from '@/constants';
-import { calculatePixelsFromBurn, formatTokenAmount } from '@/lib/solana';
+import { calculatePixelsFromBurn, formatTokenAmount, burnTokens } from '@/lib/solana';
 import { cn } from '@/lib/utils';
 
 interface BurnOption {
@@ -25,7 +26,8 @@ export default function BuyPixelsModal() {
   const [customAmount, setCustomAmount] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
 
-  const { isModalOpen, toggleModal, burnTokensForPixels, user } = useGameStore();
+  const { publicKey, signTransaction } = useWallet();
+  const { isModalOpen, toggleModal, user, addToast } = useGameStore();
 
   const burnOptions: BurnOption[] = [
     {
@@ -65,15 +67,53 @@ export default function BuyPixelsModal() {
   ];
 
   const handleBurnTokens = async () => {
-    if (!selectedAmount) return;
+    if (!selectedAmount || !publicKey || !signTransaction) {
+      addToast({
+        message: 'Please connect your wallet first',
+        type: 'error',
+      });
+      return;
+    }
 
     setIsProcessing(true);
     try {
-      await burnTokensForPixels(selectedAmount);
-      setSelectedAmount(null);
-      setCustomAmount('');
+      addToast({
+        message: 'Preparing burn transaction...',
+        type: 'info',
+      });
+
+      // Use the actual burn function
+      const VIBEY_TOKEN_MINT = process.env.NEXT_PUBLIC_VIBEY_TOKEN_MINT || '11111111111111111111111111111112';
+      const RPC_ENDPOINT = process.env.NEXT_PUBLIC_SOLANA_RPC_ENDPOINT || 'https://api.devnet.solana.com';
+      
+      const result = await burnTokens(
+        signTransaction,
+        publicKey.toString(),
+        VIBEY_TOKEN_MINT,
+        selectedAmount,
+        RPC_ENDPOINT
+      );
+
+      if (result.signature) {
+        const pixelsReceived = calculatePixelsFromBurn(selectedAmount);
+        
+        addToast({
+          message: `Successfully burned ${selectedAmount} $VIBEY for ${pixelsReceived} pixels!`,
+          type: 'success',
+        });
+
+        // Update user state locally (this would normally come from API/database)
+        // For now, we'll just close the modal and show success
+        toggleModal('buyPixels');
+        setSelectedAmount(null);
+        setCustomAmount('');
+      }
     } catch (error) {
       console.error('Burn failed:', error);
+      addToast({
+        message: `Burn failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        type: 'error',
+      });
     } finally {
       setIsProcessing(false);
     }

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { db } from '@/lib/database';
 
 export async function POST(request: NextRequest) {
   try {
@@ -20,71 +21,70 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
-    // TODO: Implement database operations
-    // 1. Save message to database
-    // 2. Broadcast to all connected clients via WebSocket/Supabase Realtime
-    // 3. Rate limiting and spam protection
+    // Save message to database
+    const result = await db.query(`
+      INSERT INTO pixey_chat_messages (wallet_address, message, created_at)
+      VALUES ($1, $2, $3)
+      RETURNING *
+    `, [wallet_address, message.trim(), new Date()]);
 
-    // Mock response for now
-    const mockResponse = {
+    const savedMessage = result.rows[0];
+
+    // TODO: Broadcast to all connected clients via WebSocket/Supabase Realtime
+    // broadcastChatMessage(savedMessage);
+
+    return NextResponse.json({
       success: true,
-      data: {
-        id: Date.now().toString(),
-        wallet_address,
-        message: message.trim(),
-        created_at: new Date(),
-      },
-    };
-
-    return NextResponse.json(mockResponse);
+      data: savedMessage,
+    });
   } catch (error) {
     console.error('Error sending message:', error);
+    
+    let errorMessage = 'Failed to send message';
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    }
+
     return NextResponse.json({
       success: false,
-      error: 'Internal server error',
+      error: errorMessage,
     }, { status: 500 });
   }
 }
 
 export async function GET() {
   try {
-    // TODO: Implement database query for recent messages
-    // Return last 100 messages ordered by created_at DESC
-
-    // Mock messages for now
-    const mockMessages = [
-      {
-        id: '1',
-        wallet_address: 'ABC123...XYZ789',
-        username: null,
-        message: 'Welcome to Pixey! 🎨',
-        created_at: new Date(Date.now() - 1000 * 60 * 5), // 5 minutes ago
-      },
-      {
-        id: '2',
-        wallet_address: 'DEF456...UVW012',
-        username: null,
-        message: 'Just placed my first pixel!',
-        created_at: new Date(Date.now() - 1000 * 60 * 3), // 3 minutes ago
-      },
-      {
-        id: '3',
-        wallet_address: 'GHI789...RST345',
-        username: null,
-        message: 'This is amazing! Love the concept.',
-        created_at: new Date(Date.now() - 1000 * 60 * 1), // 1 minute ago
-      },
-    ];
+    // Get last 100 messages ordered by created_at DESC
+    const result = await db.query(`
+      SELECT 
+        cm.id,
+        cm.wallet_address,
+        u.username,
+        cm.message,
+        cm.created_at,
+        cm.is_deleted
+      FROM pixey_chat_messages cm
+      LEFT JOIN pixey_users u ON cm.wallet_address = u.wallet_address
+      WHERE cm.is_deleted = false
+      ORDER BY cm.created_at DESC
+      LIMIT 100
+    `);
 
     return NextResponse.json({
       success: true,
-      data: mockMessages,
+      data: result.rows,
     });
   } catch (error) {
     console.error('Error fetching messages:', error);
+    
+    let errorMessage = 'Failed to fetch messages';
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    }
+
     return NextResponse.json({
       success: false,
-      error: 'Internal server error',
+      error: errorMessage,
     }, { status: 500 });
   }
 }

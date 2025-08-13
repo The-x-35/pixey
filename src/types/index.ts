@@ -111,6 +111,7 @@ export interface GameStore {
   // Actions
   setUser: (user: User | null) => void;
   updatePixelBoard: (pixels: Pixel[]) => void;
+  updateGameSettings: (currentStage: number, totalBurned: number, boardSize: number) => void;
   setSelectedPixel: (pixel: { x: number; y: number } | null) => void;
   setSelectedColor: (color: string) => void;
   addToast: (toast: Omit<Toast, 'id' | 'createdAt'>) => void;
