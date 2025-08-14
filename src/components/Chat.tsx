@@ -1,162 +1,138 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
-import { Send, MessageCircle } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
-import useGameStore from '@/store/gameStore';
-import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
-import { ChatProps } from '@/types';
-import { formatWalletAddress } from '@/lib/solana';
+import CommentInput from './CommentInput';
+import CommentItem from './CommentItem';
+import { MessageSquare, Loader2 } from 'lucide-react';
+
+interface Comment {
+  id: string;
+  content: string;
+  created_at: string;
+  wallet_address: string;
+}
+
+interface ChatProps {
+  className?: string;
+}
 
 export default function Chat({ className }: ChatProps) {
-  const [message, setMessage] = useState('');
-  const [isTyping, setIsTyping] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { connected } = useWallet();
-  const { chatMessages, addChatMessage, user } = useGameStore();
+  const commentsEndRef = useRef<HTMLDivElement>(null);
 
+  // Fetch comments from database
+  const fetchComments = async (isInitialLoad = false) => {
+    try {
+      if (isInitialLoad) {
+        setIsLoading(true);
+      }
+      
+      const response = await fetch('/api/comments');
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success) {
+          setComments(result.data);
+        } else {
+          console.error('Failed to fetch comments:', result.error);
+        }
+      } else {
+        console.error('Failed to fetch comments');
+      }
+    } catch (error) {
+      console.error('Error fetching comments:', error);
+    } finally {
+      if (isInitialLoad) {
+        setIsLoading(false);
+      }
+    }
+  };
+
+  // Submit new comment
+  const handleSubmitComment = async (content: string, walletAddress: string) => {
+    if (!connected) return;
+    
+    setIsSubmitting(true);
+    try {
+      const response = await fetch('/api/comments', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-wallet-address': walletAddress,
+        },
+        body: JSON.stringify({ content }),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success) {
+          // Add new comment to the bottom of the list
+          setComments(prev => [...prev, result.data]);
+        } else {
+          console.error('Failed to post comment:', result.error);
+        }
+      } else {
+        console.error('Failed to post comment');
+      }
+    } catch (error) {
+      console.error('Error posting comment:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Auto-scroll to bottom when new comments arrive
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    commentsEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
   useEffect(() => {
     scrollToBottom();
-  }, [chatMessages]);
+  }, [comments]);
 
-  const handleSendMessage = async () => {
-    if (!message.trim() || !connected || !user) return;
-
-    setIsTyping(true);
+  // Fetch comments on mount and set up interval
+  useEffect(() => {
+    // Initial fetch with loading state
+    fetchComments(true);
     
-    try {
-      const response = await fetch('/api/chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          wallet_address: user.wallet_address,
-          message: message.trim(),
-        }),
-      });
-
-      const result = await response.json();
-      
-      if (result.success) {
-        // Message will be added via real-time subscription
-        setMessage('');
-      } else {
-        console.error('Failed to send message:', result.error);
-      }
-    } catch (error) {
-      console.error('Error sending message:', error);
-    } finally {
-      setIsTyping(false);
-    }
-  };
-
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSendMessage();
-    }
-  };
-
-  const formatTime = (date: Date) => {
-    return new Intl.DateTimeFormat('en-US', {
-      hour: '2-digit',
-      minute: '2-digit',
-    }).format(new Date(date));
-  };
+    // Background refresh every 5 seconds without loading state
+    const interval = setInterval(() => fetchComments(false), 5000);
+    
+    return () => clearInterval(interval);
+  }, []);
 
   return (
-    <div className={cn("flex flex-col h-full bg-gray-800/50 backdrop-blur-sm rounded-lg border border-purple-500/20", className)}>
-      {/* Header */}
-      <div className="flex items-center space-x-2 p-4 border-b border-gray-700">
-        <MessageCircle className="h-5 w-5 text-purple-400" />
-        <h3 className="text-lg font-bold text-white">Live Chat</h3>
-        <div className="flex-1" />
-        <div className="text-xs text-gray-400">
-          {chatMessages.length} messages
-        </div>
-      </div>
-
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-3 min-h-0">
-        {chatMessages.length === 0 ? (
-          <div className="text-center text-gray-400 py-8">
-            <div className="text-4xl mb-2">💬</div>
-            <div>No messages yet</div>
-            <div className="text-sm">Start the conversation!</div>
+    <div className={`flex flex-col h-full ${className}`}>
+      {/* Comments list */}
+      <div className="flex-1 overflow-y-auto space-y-4 pr-2">
+        {isLoading ? (
+          <div className="flex items-center justify-center py-8">
+            <Loader2 className="h-6 w-6 animate-spin text-purple-400" />
+          </div>
+        ) : comments.length === 0 ? (
+          <div className="text-center py-8 text-gray-400">
+            <MessageSquare className="h-8 w-8 mx-auto mb-2 opacity-50" />
+            <p>No comments yet</p>
+            <p className="text-sm">Be the first to comment!</p>
           </div>
         ) : (
-          chatMessages.map((msg) => (
-            <div key={msg.id} className="flex space-x-3">
-              {/* Avatar */}
-              <div className="flex-shrink-0 w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-xs font-bold text-white">
-                {(msg.username || msg.wallet_address).slice(0, 2).toUpperCase()}
-              </div>
-
-              {/* Message Content */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center space-x-2 mb-1">
-                  <span className="font-medium text-purple-400 text-sm">
-                    {msg.username || formatWalletAddress(msg.wallet_address)}
-                  </span>
-                  <span className="text-xs text-gray-500">
-                    {formatTime(msg.created_at)}
-                  </span>
-                </div>
-                <div className="text-white text-sm break-words">
-                  {msg.message}
-                </div>
-              </div>
-            </div>
-          ))
-        )}
-        <div ref={messagesEndRef} />
-      </div>
-
-      {/* Input */}
-      <div className="p-4 border-t border-gray-700">
-        {connected ? (
-          <div className="flex space-x-2">
-            <div className="flex-1 relative">
-              <textarea
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                onKeyPress={handleKeyPress}
-                placeholder="Type a message..."
-                className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
-                rows={1}
-                maxLength={500}
-                disabled={isTyping}
-              />
-              <div className="absolute bottom-1 right-2 text-xs text-gray-500">
-                {message.length}/500
-              </div>
-            </div>
-            <Button
-              onClick={handleSendMessage}
-              disabled={!message.trim() || isTyping}
-              variant="game"
-              size="sm"
-              className="px-3"
-            >
-              {isTyping ? (
-                <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" />
-              ) : (
-                <Send className="h-4 w-4" />
-              )}
-            </Button>
-          </div>
-        ) : (
-          <div className="text-center text-gray-400 py-4">
-            <div className="text-sm">Connect your wallet to chat</div>
-          </div>
+          <>
+            {comments.map((comment) => (
+              <CommentItem key={comment.id} comment={comment} />
+            ))}
+            <div ref={commentsEndRef} />
+          </>
         )}
       </div>
+
+      {/* Comment input form */}
+      <CommentInput 
+        onSubmit={handleSubmitComment}
+        isSubmitting={isSubmitting}
+      />
     </div>
   );
 }

@@ -45,7 +45,7 @@ export default function ColorPicker() {
                   onClick={() => setSelectedColor(color)}
                   className={cn(
                     "w-12 h-12 rounded-lg border-2 transition-all duration-200 hover:scale-110",
-                    selectedColor === color ? "border-white shadow-lg" : "border-gray-600"
+                    selectedColor === color ? "border-[#262626] shadow-lg" : "border-[#262626]"
                   )}
                   style={{ backgroundColor: color }}
                 />
@@ -55,7 +55,7 @@ export default function ColorPicker() {
             {/* Preview */}
             <div className="flex items-center space-x-4 p-4 bg-gray-800 rounded-lg">
               <div
-                className="w-16 h-16 rounded-lg border border-gray-600"
+                className="w-16 h-16 rounded-lg border border-[#262626]"
                 style={{ backgroundColor: selectedColor }}
               />
               <div>

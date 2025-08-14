@@ -1,11 +1,8 @@
-// Solana Configuration
-export const SOLANA_RPC_ENDPOINT = process.env.NEXT_PUBLIC_SOLANA_RPC_ENDPOINT || 'https://api.devnet.solana.com';
+export const SOLANA_RPC_ENDPOINT = "https://flying-torrie-fast-mainnet.helius-rpc.com";
 
-// Token Configuration (string addresses to avoid build-time issues)
-export const VIBEY_TOKEN_MINT_ADDRESS = process.env.NEXT_PUBLIC_VIBEY_TOKEN_MINT || '11111111111111111111111111111112';
+export const VIBEY_TOKEN_MINT_ADDRESS = "3nf8LgahHm57gEUx64cDNJf4h53C2MwqZCK6LGDTsend";
 
-// Contract Addresses (string addresses to avoid build-time issues)
-export const BURN_PROGRAM_ID_ADDRESS = process.env.NEXT_PUBLIC_BURN_PROGRAM_ID || '11111111111111111111111111111112';
+export const VIBEY_TOTAL_SUPPLY = 1_000_000_000; // 1 billion tokens
 
 // Game Configuration
 export const FREE_PIXELS_PER_USER = 10; // Free pixels given to new users
@@ -17,10 +14,25 @@ export const getVibeyTokenMint = () => {
   return new PublicKey(VIBEY_TOKEN_MINT_ADDRESS);
 };
 
-export const getBurnProgramId = () => {
-  if (typeof window === 'undefined') return null; // Avoid SSR issues
-  const { PublicKey } = require('@solana/web3.js');
-  return new PublicKey(BURN_PROGRAM_ID_ADDRESS);
+
+// Function to calculate total burned tokens
+export const getTotalBurnedTokens = async () => {
+  if (typeof window === 'undefined') return 0; // Avoid SSR issues
+  
+  try {
+    const { Connection, PublicKey } = require('@solana/web3.js');
+    
+    const connection = new Connection(SOLANA_RPC_ENDPOINT, "confirmed");
+    const mintPublicKey = new PublicKey(VIBEY_TOKEN_MINT_ADDRESS);
+    
+    const tokenSupply = await connection.getTokenSupply(mintPublicKey);
+    const currentSupply = tokenSupply.value.uiAmount || 0;
+    
+    return VIBEY_TOTAL_SUPPLY - currentSupply;
+  } catch (error) {
+    console.error('Error fetching VIBEY token supply:', error);
+    return 0;
+  }
 };
 
 // Game Configuration

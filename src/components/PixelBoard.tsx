@@ -305,7 +305,7 @@ export default function PixelBoard({ className }: PixelBoardProps) {
   }, []);
 
   return (
-    <div ref={containerRef} className={cn("w-full h-full relative overflow-hidden rounded-lg border border-purple-500/20", className)}>
+          <div ref={containerRef} className={cn("w-full h-full relative overflow-hidden rounded-lg border border-[#262626]", className)}>
       <canvas
         ref={canvasRef}
         className="absolute inset-0 cursor-crosshair bg-gray-900"

@@ -68,10 +68,15 @@ export async function GET(request: NextRequest) {
     const wallet_address = searchParams.get('wallet_address');
 
     if (!wallet_address) {
-      return NextResponse.json(
-        { success: false, error: 'Wallet address is required' },
-        { status: 400 }
+      // If no wallet address provided, return all users for leaderboard
+      const result = await db.query(
+        'SELECT wallet_address, username, free_pixels, total_pixels_placed, total_tokens_burned FROM pixey_users ORDER BY total_pixels_placed DESC'
       );
+
+      return NextResponse.json({
+        success: true,
+        data: result.rows
+      });
     }
 
     // Get user by wallet address

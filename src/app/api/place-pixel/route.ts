@@ -46,6 +46,7 @@ export async function POST(request: NextRequest) {
       await client.query(`
         UPDATE pixey_users 
         SET free_pixels = free_pixels - 1,
+            total_pixels_placed = total_pixels_placed + 1,
             updated_at = NOW()
         WHERE wallet_address = $1
       `, [wallet_address]);

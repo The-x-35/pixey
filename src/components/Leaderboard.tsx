@@ -48,7 +48,7 @@ export default function Leaderboard({ className }: LeaderboardProps) {
   return (
     <div className={cn("space-y-6", className)}>
       {/* Burn Progress */}
-      <div className="bg-gray-800/50 backdrop-blur-sm rounded-lg p-4 border border-purple-500/20">
+      <div className="bg-gray-800/50 backdrop-blur-sm rounded-lg p-4 border border-[#262626]">
         <h3 className="text-lg font-bold text-white mb-3 flex items-center">
           🔥 Burn Progress
         </h3>
@@ -73,7 +73,7 @@ export default function Leaderboard({ className }: LeaderboardProps) {
       </div>
 
       {/* Leaderboard */}
-      <div className="bg-gray-800/50 backdrop-blur-sm rounded-lg p-4 border border-purple-500/20">
+      <div className="bg-gray-800/50 backdrop-blur-sm rounded-lg p-4 border border-[#262626]">
         <h3 className="text-lg font-bold text-white mb-4 flex items-center">
           🏆 Top Players
         </h3>
@@ -134,7 +134,7 @@ export default function Leaderboard({ className }: LeaderboardProps) {
       </div>
 
       {/* Board Stats */}
-      <div className="bg-gray-800/50 backdrop-blur-sm rounded-lg p-4 border border-purple-500/20">
+      <div className="bg-gray-800/50 backdrop-blur-sm rounded-lg p-4 border border-[#262626]">
         <h3 className="text-lg font-bold text-white mb-3 flex items-center">
           📊 Board Stats
         </h3>

@@ -72,7 +72,7 @@ function GameContent() {
   }, [connected, publicKey, setUser, addToast]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900">
+    <div className="min-h-screen">
       {/* Toast Container */}
       <ToastContainer />
       
@@ -81,18 +81,13 @@ function GameContent() {
       
       {/* Main Game Layout */}
       <div className="flex h-[calc(100vh-80px)]">
-        {/* Left Sidebar - Leaderboard */}
-        <div className="w-80 p-4 bg-gray-900/50 backdrop-blur-sm border-r border-purple-500/20 overflow-y-auto">
-          <Leaderboard />
-        </div>
-        
         {/* Center - Pixel Board */}
         <div className="flex-1 p-4">
           <PixelBoard className="w-full h-full" />
         </div>
         
         {/* Right Sidebar - Chat */}
-        <div className="w-80 p-4 bg-gray-900/50 backdrop-blur-sm border-l border-purple-500/20">
+        <div className="w-80 p-4 border-l border-[#262626]">
           <Chat className="h-full" />
         </div>
       </div>
