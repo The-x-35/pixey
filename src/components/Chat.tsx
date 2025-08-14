@@ -15,12 +15,14 @@ interface Comment {
 
 interface ChatProps {
   className?: string;
+  onVisibilityChange?: (isVisible: boolean) => void;
 }
 
-export default function Chat({ className }: ChatProps) {
+export default function Chat({ className, onVisibilityChange }: ChatProps) {
   const [comments, setComments] = useState<Comment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isVisible, setIsVisible] = useState(true);
   const { connected } = useWallet();
   const commentsEndRef = useRef<HTMLDivElement>(null);
 
@@ -104,10 +106,32 @@ export default function Chat({ className }: ChatProps) {
     return () => clearInterval(interval);
   }, []);
 
+  // Don't render anything when not visible - the floating button is handled by the parent
+  if (!isVisible) {
+    return null;
+  }
+
   return (
     <div className={`flex flex-col h-full ${className}`}>
+      {/* Header with title and close button */}
+      <div className="flex items-center justify-between px-3 py-2 border-b border-[#262626]">
+        <h3 className="text-lg font-bold text-white" style={{ fontFamily: 'Matrix Sans, sans-serif' }}>Comments ({comments.length})</h3>
+        <button
+          onClick={() => {
+            setIsVisible(false);
+            onVisibilityChange?.(false);
+          }}
+          className="text-gray-400 hover:text-white transition-colors p-1"
+          title="Close Comments"
+        >
+          <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
       {/* Comments list */}
-      <div className="flex-1 overflow-y-auto space-y-4 pr-2">
+      <div className="flex-1 overflow-y-auto space-y-4 pr-2 p-3">
         {isLoading ? (
           <div className="flex items-center justify-center py-8">
             <Loader2 className="h-6 w-6 animate-spin text-purple-400" />

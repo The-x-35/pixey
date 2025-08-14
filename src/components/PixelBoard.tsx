@@ -22,6 +22,7 @@ export default function PixelBoard({ className }: PixelBoardProps) {
   });
   const [isDragging, setIsDragging] = useState(false);
   const [lastMousePos, setLastMousePos] = useState({ x: 0, y: 0 });
+  const [lastTouchDistance, setLastTouchDistance] = useState<number | null>(null);
 
   const {
     pixelBoard,
@@ -132,7 +133,7 @@ export default function PixelBoard({ className }: PixelBoardProps) {
     );
 
     // Draw grid
-    ctx.strokeStyle = '#333';
+    ctx.strokeStyle = '#666';
     ctx.lineWidth = 0.5 / viewport.scale;
     
     for (let x = visibleStartX; x <= visibleEndX; x++) {
@@ -264,6 +265,71 @@ export default function PixelBoard({ className }: PixelBoardProps) {
     });
   }, [pixelBoard.boardSize]);
 
+  // Calculate distance between two touch points
+  const getTouchDistance = (touches: React.TouchList) => {
+    if (touches.length < 2) return null;
+    const dx = touches[0].clientX - touches[1].clientX;
+    const dy = touches[0].clientY - touches[1].clientY;
+    return Math.sqrt(dx * dx + dy * dy);
+  };
+
+  // Handle touch start for pinch-to-zoom
+  const handleTouchStart = useCallback((event: React.TouchEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
+    
+    if (event.touches.length === 2) {
+      const distance = getTouchDistance(event.touches);
+      setLastTouchDistance(distance);
+    }
+  }, []);
+
+  // Handle touch move for pinch-to-zoom
+  const handleTouchMove = useCallback((event: React.TouchEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
+    event.nativeEvent.preventDefault();
+    event.nativeEvent.stopPropagation();
+    
+    if (event.touches.length === 2) {
+      const distance = getTouchDistance(event.touches);
+      if (distance && lastTouchDistance) {
+        const scaleFactor = distance / lastTouchDistance;
+        
+        setViewport(prev => {
+          const newScale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, prev.scale * scaleFactor));
+          return {
+            ...prev,
+            scale: newScale,
+          };
+        });
+        
+        setLastTouchDistance(distance);
+      }
+    } else if (event.touches.length === 1) {
+      // Single touch panning
+      const touch = event.touches[0];
+      setViewport(prev => {
+        const newOffsetX = prev.offsetX + touch.clientX - (lastMousePos.x || touch.clientX);
+        const newOffsetY = prev.offsetY + touch.clientY - (lastMousePos.y || touch.clientY);
+        
+        return {
+          ...prev,
+          offsetX: newOffsetX,
+          offsetY: newOffsetY,
+        };
+      });
+      
+      setLastMousePos({ x: touch.clientX, y: touch.clientY });
+    }
+  }, [lastTouchDistance, lastMousePos]);
+
+  // Handle touch end
+  const handleTouchEnd = useCallback(() => {
+    setLastTouchDistance(null);
+    setLastMousePos({ x: 0, y: 0 });
+  }, []);
+
   // Resize canvas to match container
   const resizeCanvas = useCallback(() => {
     const canvas = canvasRef.current;
@@ -305,15 +371,30 @@ export default function PixelBoard({ className }: PixelBoardProps) {
   }, []);
 
   return (
-          <div ref={containerRef} className={cn("w-full h-full relative overflow-hidden rounded-lg border border-[#262626]", className)}>
+    <div 
+      ref={containerRef} 
+      className={cn("w-full h-full relative overflow-hidden rounded-lg border border-[#262626]", className)}
+      style={{
+        touchAction: 'none',
+      }}
+    >
       <canvas
         ref={canvasRef}
-        className="absolute inset-0 cursor-crosshair bg-gray-900"
+        className="absolute inset-0 cursor-crosshair bg-black"
         onClick={handleCanvasClick}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
         onWheel={handleWheel}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        style={{
+          touchAction: 'none',
+          userSelect: 'none',
+          WebkitUserSelect: 'none',
+          WebkitTouchCallout: 'none',
+        }}
       />
       
       {/* Zoom controls */}
@@ -323,7 +404,19 @@ export default function PixelBoard({ className }: PixelBoardProps) {
             ...prev, 
             scale: Math.min(MAX_SCALE, prev.scale * 1.5) 
           }))}
-          className="bg-purple-600 hover:bg-purple-700 text-white p-2 rounded-full shadow-lg transition-colors"
+          className="text-white p-2 rounded-full shadow-lg transition-all duration-200 hover:scale-110"
+          style={{
+            background: 'linear-gradient(to right, #EE00FF 0%, #EE5705 66%, #EE05E7 100%)',
+            color: 'white',
+            padding: '8px',
+            borderRadius: '50%',
+            boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+            transition: 'all 0.2s',
+            border: 'none',
+            cursor: 'pointer',
+            fontSize: '16px',
+            fontWeight: 'bold',
+          }}
           title="Zoom In"
         >
           +
@@ -333,7 +426,19 @@ export default function PixelBoard({ className }: PixelBoardProps) {
             ...prev, 
             scale: Math.max(MIN_SCALE, prev.scale / 1.5) 
           }))}
-          className="bg-purple-600 hover:bg-purple-700 text-white p-2 rounded-full shadow-lg transition-colors"
+          className="text-white p-2 rounded-full shadow-lg transition-all duration-200 hover:scale-110"
+          style={{
+            background: 'linear-gradient(to right, #EE00FF 0%, #EE5705 66%, #EE05E7 100%)',
+            color: 'white',
+            padding: '8px',
+            borderRadius: '50%',
+            boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+            transition: 'all 0.2s',
+            border: 'none',
+            cursor: 'pointer',
+            fontSize: '16px',
+            fontWeight: 'bold',
+          }}
           title="Zoom Out"
         >
           -
@@ -354,7 +459,19 @@ export default function PixelBoard({ className }: PixelBoardProps) {
               offsetY: centerY,
             });
           }}
-          className="bg-purple-600 hover:bg-purple-700 text-white p-2 rounded text-xs font-medium shadow-lg transition-colors"
+          className="text-white p-2 rounded text-xs font-medium shadow-lg transition-all duration-200 hover:scale-110"
+          style={{
+            background: 'linear-gradient(to right, #EE00FF 0%, #EE5705 66%, #EE05E7 100%)',
+            color: 'white',
+            padding: '8px',
+            borderRadius: '4px',
+            fontSize: '12px',
+            fontWeight: '500',
+            boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+            transition: 'all 0.2s',
+            border: 'none',
+            cursor: 'pointer',
+          }}
           title="Reset View"
         >
           Reset
@@ -366,7 +483,7 @@ export default function PixelBoard({ className }: PixelBoardProps) {
         <div className="text-sm font-medium">
           Board: {pixelBoard.boardSize}x{pixelBoard.boardSize}
         </div>
-        <div className="text-xs text-purple-300">
+        <div className="text-xs text-white">
           Stage {pixelBoard.currentStage} • Zoom: {Math.round(viewport.scale * 100)}%
         </div>
       </div>
