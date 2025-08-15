@@ -12,7 +12,7 @@ interface ViewportState {
   offsetY: number;
 }
 
-export default function PixelBoard({ className }: PixelBoardProps) {
+export default function PixelBoard({ className, selectedPixel, onPixelSelect }: PixelBoardProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [viewport, setViewport] = useState<ViewportState>({
@@ -26,10 +26,6 @@ export default function PixelBoard({ className }: PixelBoardProps) {
 
   const {
     pixelBoard,
-    selectedPixel,
-    setSelectedPixel,
-    selectedColor,
-    toggleModal,
     updatePixelBoard,
     updateGameSettings,
   } = useGameStore();
@@ -171,20 +167,11 @@ export default function PixelBoard({ className }: PixelBoardProps) {
         PIXEL_SIZE,
         PIXEL_SIZE
       );
-      
-      // Preview color
-      ctx.fillStyle = selectedColor + '80'; // Semi-transparent
-      ctx.fillRect(
-        selectedPixel.x * PIXEL_SIZE,
-        selectedPixel.y * PIXEL_SIZE,
-        PIXEL_SIZE,
-        PIXEL_SIZE
-      );
     }
 
     // Restore context
     ctx.restore();
-  }, [viewport, pixelBoard, selectedPixel, selectedColor]);
+  }, [viewport, pixelBoard, selectedPixel]);
 
   // Handle canvas click
   const handleCanvasClick = useCallback((event: React.MouseEvent) => {
@@ -192,10 +179,9 @@ export default function PixelBoard({ className }: PixelBoardProps) {
 
     const gridPos = screenToGrid(event.clientX, event.clientY);
     if (gridPos) {
-      setSelectedPixel(gridPos);
-      toggleModal('colorPicker');
+      onPixelSelect(gridPos);
     }
-  }, [isDragging, screenToGrid, setSelectedPixel, toggleModal]);
+  }, [isDragging, screenToGrid, onPixelSelect]);
 
   // Handle mouse down for dragging
   const handleMouseDown = useCallback((event: React.MouseEvent) => {

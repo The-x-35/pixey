@@ -134,6 +134,8 @@ export interface ApiResponse<T = any> {
 // Component prop types
 export interface PixelBoardProps {
   className?: string;
+  selectedPixel: { x: number; y: number } | null;
+  onPixelSelect: (pixel: { x: number; y: number } | null) => void;
 }
 
 export interface ChatProps {

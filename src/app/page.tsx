@@ -12,11 +12,25 @@ import ColorPicker from '@/components/ColorPicker';
 import BuyPixelsModal from '@/components/BuyPixelsModal';
 import FeaturedArtworksModal from '@/components/FeaturedArtworksModal';
 import useGameStore from '@/store/gameStore';
+import { PIXEL_COLORS } from '@/constants';
 
 function GameContent() {
   const { publicKey, connected } = useWallet();
-  const { setUser, addToast } = useGameStore();
+  const { setUser, addToast, placePixel } = useGameStore();
   const [isCommentsVisible, setIsCommentsVisible] = useState(true);
+  const [selectedColor, setSelectedColor] = useState<string>(PIXEL_COLORS[0]);
+  const [selectedPixel, setSelectedPixel] = useState<{ x: number; y: number } | null>(null);
+  
+  const handlePlacePixel = async () => {
+    if (!selectedPixel || !connected || !publicKey) return;
+    
+    try {
+      await placePixel(selectedPixel.x, selectedPixel.y, selectedColor);
+      setSelectedPixel(null); // Clear selection after placing
+    } catch (error) {
+      console.error('Error placing pixel:', error);
+    }
+  };
 
   useEffect(() => {
     if (connected && publicKey) {
@@ -81,10 +95,14 @@ function GameContent() {
       <Navbar />
       
       {/* Main Game Layout */}
-      <div className={`flex h-[calc(100vh-80px)] ${isCommentsVisible ? '' : 'justify-center'}`}>
+      <div className={`flex h-[calc(100vh-120px)] ${isCommentsVisible ? '' : 'justify-center'}`}>
         {/* Center - Pixel Board */}
         <div className={`p-4 ${isCommentsVisible ? 'flex-1' : 'w-full'}`}>
-          <PixelBoard className="w-full h-full" />
+          <PixelBoard 
+            className="w-full h-full" 
+            selectedPixel={selectedPixel}
+            onPixelSelect={setSelectedPixel}
+          />
         </div>
         
         {/* Right Sidebar - Chat */}
@@ -93,6 +111,52 @@ function GameContent() {
             <Chat className="h-full" onVisibilityChange={setIsCommentsVisible} />
           </div>
         )}
+      </div>
+      
+      {/* Permanent Color Palette at Bottom */}
+      <div className="fixed bottom-0 left-0 right-0 bg-transparent backdrop-blur-md border-t border-[#262626] p-4 z-40">
+        <div className="max-w-6xl mx-auto">
+          <div className="flex items-center justify-between">
+            {/* Color Palette */}
+            <div className="flex items-center space-x-3">
+              <span className="text-white font-medium text-sm">Colors:</span>
+              <div className="flex space-x-2">
+                {PIXEL_COLORS.map((color) => (
+                  <button
+                    key={color}
+                    onClick={() => setSelectedColor(color)}
+                    className={`w-8 h-8 rounded-lg border-2 transition-all duration-200 hover:scale-110 ${
+                      selectedColor === color ? 'border-white shadow-lg' : 'border-[#262626]'
+                    }`}
+                    style={{ backgroundColor: color }}
+                    title={`Select ${color}`}
+                  />
+                ))}
+              </div>
+            </div>
+            
+            {/* Place Pixel Button */}
+            <button
+              onClick={handlePlacePixel}
+              disabled={!selectedPixel}
+              className="text-white px-6 py-2 rounded-lg font-medium transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+              style={{
+                background: 'linear-gradient(to right, #EE00FF 0%, #EE5705 66%, #EE05E7 100%)',
+                color: 'white',
+                padding: '8px 24px',
+                borderRadius: '8px',
+                fontSize: '14px',
+                fontWeight: '500',
+                boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+                transition: 'all 0.2s',
+                border: 'none',
+                cursor: 'pointer',
+              }}
+            >
+              Place Pixel
+            </button>
+          </div>
+        </div>
       </div>
       
       {/* Floating Chat Button - Only show when comments are closed */}
@@ -119,7 +183,6 @@ function GameContent() {
       )}
       
       {/* Modals */}
-      <ColorPicker />
       <BuyPixelsModal />
       <FeaturedArtworksModal />
     </div>
