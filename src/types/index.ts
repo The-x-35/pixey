@@ -112,6 +112,7 @@ export interface GameStore {
   removeToast: (id: string) => void;
   addChatMessage: (message: ChatMessage) => void;
   updateLeaderboard: (leaderboard: LeaderboardEntry[]) => void;
+  refreshUserData: (walletAddress: string) => Promise<void>;
   placePixel: (x: number, y: number, color: string) => Promise<void>;
 }
 

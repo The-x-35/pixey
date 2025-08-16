@@ -116,6 +116,21 @@ const useGameStore = create<GameStore>()(
       set({ leaderboard });
     },
     
+    refreshUserData: async (walletAddress: string) => {
+      try {
+        const response = await fetch(`/api/users?wallet_address=${walletAddress}`);
+        if (response.ok) {
+          const result = await response.json();
+          if (result.success && result.data && result.data.user) {
+            const userData = result.data.user;
+            set({ user: userData });
+          }
+        }
+      } catch (error) {
+        console.error('Error refreshing user data:', error);
+      }
+    },
+    
     placePixel: async (x: number, y: number, color: string) => {
       const state = get();
       const user = state.user;

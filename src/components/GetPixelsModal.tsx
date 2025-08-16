@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Coins, Zap } from 'lucide-react';
 import useGameStore from '@/store/gameStore';
 import { VIBEY_TO_PIXELS_RATE } from '@/constants';
+import { burnVIBEYTokens } from '@/lib/burnTokens';
 
 interface GetPixelsModalProps {
   isOpen: boolean;
@@ -16,8 +17,8 @@ interface GetPixelsModalProps {
 }
 
 export default function GetPixelsModal({ isOpen, onClose }: GetPixelsModalProps) {
-  const { publicKey } = useWallet();
-  const { addToast } = useGameStore();
+  const { publicKey, signTransaction } = useWallet();
+  const { addToast, refreshUserData } = useGameStore();
   const [pixelsWanted, setPixelsWanted] = useState<string>('');
   const [vibeyToBurn, setVibeyToBurn] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -45,7 +46,7 @@ export default function GetPixelsModal({ isOpen, onClose }: GetPixelsModalProps)
   };
 
   const handleSubmit = async () => {
-    if (!publicKey) {
+    if (!publicKey || !signTransaction) {
       addToast({
         message: 'Please connect your wallet first',
         type: 'error',
@@ -83,6 +84,14 @@ export default function GetPixelsModal({ isOpen, onClose }: GetPixelsModalProps)
     setIsSubmitting(true);
 
     try {
+      // First, burn the tokens on Solana
+      const result = await burnVIBEYTokens({
+        walletSignTransaction: signTransaction,
+        ownerPubkey: publicKey.toString(),
+        amount: vibeyAmount,
+      });
+
+      // Now call the API to update the database
       const response = await fetch('/api/burn-tokens', {
         method: 'POST',
         headers: {
@@ -91,30 +100,37 @@ export default function GetPixelsModal({ isOpen, onClose }: GetPixelsModalProps)
         body: JSON.stringify({
           wallet_address: publicKey.toString(),
           token_amount: vibeyAmount,
+          transaction_signature: result.signature,
         }),
       });
 
-      const result = await response.json();
+      const apiResult = await response.json();
 
-      if (result.success) {
+      if (apiResult.success) {
         addToast({
           message: `Successfully burned ${vibeyAmount} $VIBEY for ${pixelsAmount} pixels!`,
           type: 'success',
         });
+        
+        // Refresh user data in the store so navbar updates
+        if (publicKey) {
+          await refreshUserData(publicKey.toString());
+        }
+        
         onClose();
         // Reset form
         setPixelsWanted('');
         setVibeyToBurn('');
       } else {
         addToast({
-          message: result.error || 'Failed to burn tokens',
+          message: apiResult.error || 'Failed to update database',
           type: 'error',
         });
       }
     } catch (error) {
       console.error('Error burning tokens:', error);
       addToast({
-        message: 'Failed to burn tokens. Please try again.',
+        message: error instanceof Error ? error.message : 'Failed to burn tokens. Please try again.',
         type: 'error',
       });
     } finally {
