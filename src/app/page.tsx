@@ -9,12 +9,14 @@ import PixelBoard from '@/components/PixelBoard';
 import Chat from '@/components/Chat';
 import ToastContainer from '@/components/Toast';
 import useGameStore from '@/store/gameStore';
+import { useWalletAuth } from '@/hooks/useWalletAuth';
 import { PIXEL_COLORS } from '@/constants';
 
 function GameContent() {
   const { publicKey, connected } = useWallet();
   const { setVisible } = useWalletModal();
-  const { setUser, addToast, placePixel } = useGameStore();
+  const { placePixel, addToast } = useGameStore();
+  const { isAuthenticated, isAuthenticating } = useWalletAuth();
   const [isCommentsVisible, setIsCommentsVisible] = useState(false);
   const [selectedColor, setSelectedColor] = useState<string>(PIXEL_COLORS[0]);
   const [selectedPixel, setSelectedPixel] = useState<{ x: number; y: number } | null>(null);
@@ -28,6 +30,15 @@ function GameContent() {
       return;
     }
     
+    if (!isAuthenticated) {
+      // Show toast message instead of hiding UI
+      addToast({
+        message: 'Please sign the authentication message to place pixels',
+        type: 'info',
+      });
+      return;
+    }
+    
     try {
       await placePixel(selectedPixel.x, selectedPixel.y, selectedColor);
       setSelectedPixel(null); // Clear selection after placing
@@ -36,59 +47,9 @@ function GameContent() {
     }
   };
 
-  useEffect(() => {
-    if (connected && publicKey) {
-      // Create or get user from database
-      const createOrGetUser = async () => {
-        try {
-          const response = await fetch('/api/users', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              wallet_address: publicKey.toString(),
-            }),
-          });
 
-          const result = await response.json();
-          
-          if (result.success) {
-            const userData = result.data.user;
-            setUser(userData);
-            
-            if (result.data.isNewUser) {
-              addToast({
-                message: `Welcome to Pixey! You have ${userData.free_pixels} free pixels to start.`,
-                type: 'success',
-              });
-            } else {
-              addToast({
-                message: `Welcome back! You have ${userData.free_pixels} pixels available.`,
-                type: 'info',
-              });
-            }
-          } else {
-            console.error('Failed to create/get user:', result.error);
-            addToast({
-              message: 'Failed to connect wallet. Please try again.',
-              type: 'error',
-            });
-          }
-        } catch (error) {
-          console.error('Error creating/getting user:', error);
-          addToast({
-            message: 'Failed to connect wallet. Please try again.',
-            type: 'error',
-          });
-        }
-      };
 
-      createOrGetUser();
-    } else {
-      setUser(null);
-    }
-  }, [connected, publicKey, setUser, addToast]);
+
 
   return (
     <div className="min-h-screen">
@@ -96,7 +57,7 @@ function GameContent() {
       <ToastContainer />
       
       {/* Navbar */}
-      <Navbar />
+      <Navbar isAuthenticated={isAuthenticated} />
       
       {/* Main Game Layout */}
       <div className={`flex h-[calc(100vh-120px)] ${isCommentsVisible ? '' : 'justify-center'}`}>

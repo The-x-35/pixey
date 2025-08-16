@@ -14,9 +14,10 @@ import GetPixelsModal from './GetPixelsModal';
 
 interface NavbarProps {
   className?: string;
+  isAuthenticated?: boolean;
 }
 
-export default function Navbar({ className }: NavbarProps) {
+export default function Navbar({ className, isAuthenticated }: NavbarProps) {
   const { publicKey, disconnect } = useWallet();
   const { user, pixelBoard } = useGameStore();
   const [showTopPlayers, setShowTopPlayers] = useState(false);
@@ -215,7 +216,7 @@ export default function Navbar({ className }: NavbarProps) {
           </Button>
 
           {/* Wallet Section */}
-          {publicKey ? (
+          {publicKey && isAuthenticated ? (
             <div className="flex items-center space-x-1">
               {/* Get Pixels Button */}
               <Button
