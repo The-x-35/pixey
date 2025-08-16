@@ -5,11 +5,12 @@ import { useWallet } from '@solana/wallet-adapter-react';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import useGameStore from '@/store/gameStore';
 import { cn } from '@/lib/utils';
-import { Copy, LogOut, Trophy } from 'lucide-react';
+import { Copy, LogOut, Trophy, Coins } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Card, CardContent } from '@/components/ui/card';
 import { getTotalBurnedTokens } from '@/constants';
+import GetPixelsModal from './GetPixelsModal';
 
 interface NavbarProps {
   className?: string;
@@ -25,6 +26,7 @@ export default function Navbar({ className }: NavbarProps) {
   const [currentNotificationType, setCurrentNotificationType] = useState<string>('pixel_placed');
   const [currentNotificationColor, setCurrentNotificationColor] = useState<string>('green');
   const [isShaking, setIsShaking] = useState(false);
+  const [showGetPixels, setShowGetPixels] = useState(false);
   
   // Fetch total burned tokens on component mount
   useEffect(() => {
@@ -184,7 +186,7 @@ export default function Navbar({ className }: NavbarProps) {
           {/* Pixels Placed Stats */}
           <div className="flex items-center space-x-2 bg-white/10 rounded-lg px-2 py-1 border border-white/20">
             <div className="text-center">
-              <div className="text-xs text-white">
+              <div className="text-sm text-white">
                 <span className="text-gray-300">Pixels Placed: </span>
                 <span className="font-bold">
                   {pixelBoard.pixels ? Object.keys(pixelBoard.pixels).length : 0}
@@ -196,7 +198,7 @@ export default function Navbar({ className }: NavbarProps) {
           {/* Total Burned Stats */}
           <div className="flex items-center space-x-2 bg-white/10 rounded-lg px-2 py-1 border border-white/20">
             <div className="text-center">
-              <div className="text-xs font-bold text-white">
+              <div className="text-sm font-bold text-white">
                 🔥Burned {formatLargeNumber(totalBurnedTokens)} $VIBEY              </div>
             </div>
           </div>
@@ -206,7 +208,7 @@ export default function Navbar({ className }: NavbarProps) {
             onClick={openStats}
             variant="outline"
             size="sm"
-            className="bg-white/10 border-white/20 text-white hover:bg-white/20 text-xs px-2 py-1"
+            className="bg-white/10 border-white/20 text-white hover:bg-white/20 text-sm px-2 py-1"
           >
             <Trophy className="h-3 w-3 mr-1" />
             Leaderboard
@@ -214,19 +216,30 @@ export default function Navbar({ className }: NavbarProps) {
 
           {/* Wallet Section */}
           {publicKey ? (
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-1">
+              {/* Get Pixels Button */}
+              <Button
+                onClick={() => setShowGetPixels(true)}
+                variant="outline"
+                size="sm"
+                className="bg-yellow-500/20 border-yellow-500/30 text-yellow-400 hover:bg-yellow-500/30 text-sm px-1.5 py-0.5"
+              >
+                <Coins className="h-3 w-3 mr-1" />
+                Get Pixels
+              </Button>
+
               {/* User Info */}
-              <div className="flex items-center space-x-2 bg-white/10 rounded-lg px-2 py-1">
+              <div className="flex items-center space-x-1.5 bg-white/10 rounded-lg px-1.5 py-0.5">
                 <img
                   src={getAvatarUrl()}
                   alt="Avatar"
-                  className="h-6 w-6 rounded-full"
+                  className="h-5 w-5 rounded-full"
                 />
                 <div className="text-right">
-                  <div className="text-xs font-medium text-white">
+                  <div className="text-sm font-medium text-white">
                     {publicKey.toString().slice(0, 4)}...{publicKey.toString().slice(-4)}
                   </div>
-                  <div className="text-xs text-gray-300">
+                  <div className="text-sm text-gray-300">
                     {user?.total_pixels_placed || 0} placed • {user?.free_pixels || 0} left
                   </div>
                 </div>
@@ -234,7 +247,7 @@ export default function Navbar({ className }: NavbarProps) {
                   onClick={copyAddress}
                   variant="ghost"
                   size="sm"
-                  className="h-5 w-5 p-0 text-gray-400 hover:text-white"
+                  className="h-4 w-4 p-0 text-gray-400 hover:text-white"
                 >
                   <Copy className="h-2 w-2" />
                 </Button>
@@ -245,9 +258,9 @@ export default function Navbar({ className }: NavbarProps) {
                 onClick={handleDisconnect}
                 variant="ghost"
                 size="sm"
-                className="text-gray-400 hover:text-white h-5 w-5 p-0"
+                className="text-gray-400 hover:text-white h-4 w-4 p-0"
               >
-                <LogOut className="h-3 w-3" />
+                <LogOut className="h-2 w-2" />
               </Button>
             </div>
           ) : (
@@ -303,6 +316,12 @@ export default function Navbar({ className }: NavbarProps) {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Get Pixels Modal */}
+      <GetPixelsModal 
+        isOpen={showGetPixels} 
+        onClose={() => setShowGetPixels(false)} 
+      />
     </>
   );
 }

@@ -6,6 +6,7 @@ export const VIBEY_TOTAL_SUPPLY = 1_000_000_000; // 1 billion tokens
 
 // Game Configuration
 export const FREE_PIXELS_PER_USER = 10; // Free pixels given to new users
+export const VIBEY_TO_PIXELS_RATE = 1; // 1 VIBEY = 1 pixel
 
 // Helper functions to create PublicKey objects when needed
 export const getVibeyTokenMint = () => {

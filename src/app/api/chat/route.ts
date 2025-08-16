@@ -30,9 +30,6 @@ export async function POST(request: NextRequest) {
 
     const savedMessage = result.rows[0];
 
-    // TODO: Broadcast to all connected clients via WebSocket/Supabase Realtime
-    // broadcastChatMessage(savedMessage);
-
     return NextResponse.json({
       success: true,
       data: savedMessage,
