@@ -464,13 +464,10 @@ export default function PixelBoard({ className, selectedPixel, onPixelSelect }: 
         </button>
       </div>
 
-      {/* Board info */}
+      {/* Zoom info only */}
       <div className="absolute top-4 left-4 bg-black/50 backdrop-blur-sm text-white p-3 rounded-lg">
-        <div className="text-sm font-medium">
-          Board: {pixelBoard.boardSize}x{pixelBoard.boardSize}
-        </div>
         <div className="text-xs text-white">
-          Stage {pixelBoard.currentStage} • Zoom: {Math.round(viewport.scale * 100)}%
+          Zoom: {Math.round(viewport.scale * 100)}%
         </div>
       </div>
     </div>

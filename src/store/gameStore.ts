@@ -195,10 +195,7 @@ const useGameStore = create<GameStore>()(
             selectedPixel: null,
           });
           
-          state.addToast({
-            message: `Pixel placed at (${x}, ${y})!`,
-            type: 'success',
-          });
+
         } else {
           state.addToast({
             message: result.error || 'Failed to place pixel',

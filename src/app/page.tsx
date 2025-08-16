@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
+import { useWalletModal } from '@solana/wallet-adapter-react-ui';
 import WalletProviderWrapper from '@/components/WalletProvider';
 import Navbar from '@/components/Navbar';
 import PixelBoard from '@/components/PixelBoard';
@@ -16,13 +17,20 @@ import { PIXEL_COLORS } from '@/constants';
 
 function GameContent() {
   const { publicKey, connected } = useWallet();
+  const { setVisible } = useWalletModal();
   const { setUser, addToast, placePixel } = useGameStore();
-  const [isCommentsVisible, setIsCommentsVisible] = useState(true);
+  const [isCommentsVisible, setIsCommentsVisible] = useState(false);
   const [selectedColor, setSelectedColor] = useState<string>(PIXEL_COLORS[0]);
   const [selectedPixel, setSelectedPixel] = useState<{ x: number; y: number } | null>(null);
   
   const handlePlacePixel = async () => {
-    if (!selectedPixel || !connected || !publicKey) return;
+    if (!selectedPixel) return;
+    
+    if (!connected || !publicKey) {
+      // Open wallet selection dialog if no wallet is connected
+      setVisible(true);
+      return;
+    }
     
     try {
       await placePixel(selectedPixel.x, selectedPixel.y, selectedColor);
@@ -97,7 +105,7 @@ function GameContent() {
       {/* Main Game Layout */}
       <div className={`flex h-[calc(100vh-120px)] ${isCommentsVisible ? '' : 'justify-center'}`}>
         {/* Center - Pixel Board */}
-        <div className={`p-4 ${isCommentsVisible ? 'flex-1' : 'w-full'}`}>
+        <div className={`p-2 ${isCommentsVisible ? 'flex-1' : 'w-full'}`}>
           <PixelBoard 
             className="w-full h-full" 
             selectedPixel={selectedPixel}

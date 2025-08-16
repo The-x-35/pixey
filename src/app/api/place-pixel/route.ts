@@ -57,9 +57,28 @@ export async function POST(request: NextRequest) {
         VALUES ($1, $2, $3, $4)
       `, [x, y, color, wallet_address]);
 
+      // 5. Send notification to all users about the new pixel
+      const allUsersResult = await client.query(
+        'SELECT wallet_address FROM pixey_users WHERE wallet_address != $1',
+        [wallet_address]
+      );
+      
+      // Create notifications for all other users
+      for (const userRow of allUsersResult.rows) {
+        await client.query(`
+          INSERT INTO pixey_notifications (type, message, data, recipient_wallet)
+          VALUES ($1, $2, $3, $4)
+        `, [
+          'pixel_placed',
+          `A new pixel was placed at (${x}, ${y})`,
+          JSON.stringify({ x, y, color, placed_by: wallet_address }),
+          userRow.wallet_address
+        ]);
+      }
+
       await client.query('COMMIT');
 
-      // 5. Get updated user data
+      // 6. Get updated user data
       const updatedUser = await client.query(
         'SELECT free_pixels FROM pixey_users WHERE wallet_address = $1',
         [wallet_address]
