@@ -32,7 +32,6 @@ export const getTableStats = async () => {
       'pixey_pixels', 
       'pixey_burn_transactions',
       'pixey_chat_messages',
-      'pixey_featured_artworks',
       'pixey_game_settings',
       'pixey_pixel_history'
     ];
@@ -49,7 +48,7 @@ export const getTableStats = async () => {
         let recentDataQuery = `SELECT * FROM ${table}`;
         
         // Add ORDER BY if table has created_at or placed_at column
-        if (['pixey_users', 'pixey_burn_transactions', 'pixey_chat_messages', 'pixey_featured_artworks'].includes(table)) {
+        if (['pixey_users', 'pixey_burn_transactions', 'pixey_chat_messages'].includes(table)) {
           recentDataQuery += ' ORDER BY created_at DESC';
         } else if (table === 'pixey_pixels') {
           recentDataQuery += ' ORDER BY placed_at DESC';

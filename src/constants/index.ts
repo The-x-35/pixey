@@ -42,18 +42,6 @@ export const PIXEL_BOARD_STAGES = {
   STAGE_3: { size: 1000, required_burns: 100000 },
 } as const;
 
-// Bulk Burn Discounts
-export const BULK_BURN_DISCOUNTS = [
-  { tokens: 10, pixels: 11 },
-  { tokens: 50, pixels: 60 },
-  { tokens: 100, pixels: 120 },
-  { tokens: 500, pixels: 650 },
-] as const;
-
-// UI Configuration
-export const MAX_TOASTS = 2;
-export const TOAST_DURATION = 5000; // 5 seconds
-
 // Colors for pixel board
 export const PIXEL_COLORS = [
   '#FF0000', '#00FF00', '#0000FF', '#FFFF00', '#FF00FF', '#00FFFF',
@@ -61,6 +49,3 @@ export const PIXEL_COLORS = [
   '#808000', '#800080', '#008080', '#C0C0C0', '#FFA500', '#FFC0CB',
   '#A52A2A', '#90EE90', '#87CEEB', '#DDA0DD', '#F0E68C',
 ] as const;
-
-// Database table prefix
-export const DB_TABLE_PREFIX = 'pixey_';

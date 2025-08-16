@@ -87,7 +87,6 @@ export interface WalletContextType {
 export interface GameStore {
   // User state
   user: User | null;
-  isConnecting: boolean;
   
   // Board state
   pixelBoard: PixelBoardState;
@@ -96,11 +95,6 @@ export interface GameStore {
   
   // UI state
   toasts: Toast[];
-  isModalOpen: {
-    buyPixels: boolean;
-    featuredArtworks: boolean;
-    colorPicker: boolean;
-  };
   
   // Chat state
   chatMessages: ChatMessage[];
@@ -116,11 +110,9 @@ export interface GameStore {
   setSelectedColor: (color: string) => void;
   addToast: (toast: Omit<Toast, 'id' | 'createdAt'>) => void;
   removeToast: (id: string) => void;
-  toggleModal: (modal: keyof GameStore['isModalOpen']) => void;
   addChatMessage: (message: ChatMessage) => void;
   updateLeaderboard: (leaderboard: LeaderboardEntry[]) => void;
   placePixel: (x: number, y: number, color: string) => Promise<void>;
-  burnTokensForPixels: (tokenAmount: number) => Promise<void>;
 }
 
 // API response types

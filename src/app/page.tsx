@@ -7,11 +7,7 @@ import WalletProviderWrapper from '@/components/WalletProvider';
 import Navbar from '@/components/Navbar';
 import PixelBoard from '@/components/PixelBoard';
 import Chat from '@/components/Chat';
-import Leaderboard from '@/components/Leaderboard';
 import ToastContainer from '@/components/Toast';
-import ColorPicker from '@/components/ColorPicker';
-import BuyPixelsModal from '@/components/BuyPixelsModal';
-import FeaturedArtworksModal from '@/components/FeaturedArtworksModal';
 import useGameStore from '@/store/gameStore';
 import { PIXEL_COLORS } from '@/constants';
 
@@ -190,9 +186,7 @@ function GameContent() {
         </button>
       )}
       
-      {/* Modals */}
-      <BuyPixelsModal />
-      <FeaturedArtworksModal />
+
     </div>
   );
 }

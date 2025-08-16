@@ -7,7 +7,6 @@ const useGameStore = create<GameStore>()(
   subscribeWithSelector((set, get) => ({
     // Initial state
     user: null,
-    isConnecting: false,
     
     pixelBoard: {
       pixels: {},
@@ -20,11 +19,6 @@ const useGameStore = create<GameStore>()(
     selectedColor: PIXEL_COLORS[0],
     
     toasts: [],
-    isModalOpen: {
-      buyPixels: false,
-      featuredArtworks: false,
-      colorPicker: false,
-    },
     
     chatMessages: [],
     leaderboard: [],
@@ -111,16 +105,7 @@ const useGameStore = create<GameStore>()(
         toasts: state.toasts.filter(toast => toast.id !== id)
       }));
     },
-    
-    toggleModal: (modal: keyof GameStore['isModalOpen']) => {
-      set(state => ({
-        isModalOpen: {
-          ...state.isModalOpen,
-          [modal]: !state.isModalOpen[modal],
-        }
-      }));
-    },
-    
+
     addChatMessage: (message: ChatMessage) => {
       set(state => ({
         chatMessages: [message, ...state.chatMessages].slice(0, 100) // Keep only 100 messages
@@ -148,7 +133,6 @@ const useGameStore = create<GameStore>()(
           message: 'No pixels available. Buy more pixels!',
           type: 'warning',
         });
-        state.toggleModal('buyPixels');
         return;
       }
       
@@ -210,74 +194,7 @@ const useGameStore = create<GameStore>()(
         });
       }
     },
-    
-    burnTokensForPixels: async (tokenAmount: number) => {
-      const state = get();
-      const user = state.user;
-      
-      if (!user) {
-        state.addToast({
-          message: 'Please connect your wallet first',
-          type: 'error',
-        });
-        return;
-      }
-      
-      try {
-        state.addToast({
-          message: 'Burn transaction initiated...',
-          type: 'info',
-        });
-        
-        // Call API to process burn with actual transaction
-        const response = await fetch('/api/burn-tokens', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            wallet_address: user.wallet_address,
-            token_amount: tokenAmount,
-          }),
-        });
-        
-        const result = await response.json();
-        
-        if (result.success) {
-          const pixelsReceived = result.data.pixels_received;
-          
-          set({
-            user: {
-              ...user,
-              free_pixels: user.free_pixels + pixelsReceived,
-              total_tokens_burned: user.total_tokens_burned + tokenAmount,
-            },
-            pixelBoard: {
-              ...state.pixelBoard,
-              totalBurned: state.pixelBoard.totalBurned + tokenAmount,
-            }
-          });
-          
-          state.addToast({
-            message: `Successfully burned ${tokenAmount} $VIBEY for ${pixelsReceived} pixels!`,
-            type: 'success',
-          });
-          
-          state.toggleModal('buyPixels');
-        } else {
-          state.addToast({
-            message: result.error || 'Failed to burn tokens',
-            type: 'error',
-          });
-        }
-      } catch (error) {
-        console.error('Error burning tokens:', error);
-        state.addToast({
-          message: 'Failed to burn tokens. Please try again.',
-          type: 'error',
-        });
-      }
-    },
+
   }))
 );
 

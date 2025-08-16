@@ -16,7 +16,7 @@ import {
   getAccount,
   getMint,
 } from '@solana/spl-token';
-import { SOLANA_RPC_ENDPOINT, BULK_BURN_DISCOUNTS } from '@/constants';
+import { SOLANA_RPC_ENDPOINT } from '@/constants';
 
 // Initialize Solana connection
 export const connection = new Connection(SOLANA_RPC_ENDPOINT, 'confirmed');
@@ -48,29 +48,8 @@ export const getSolBalance = async (walletAddress: PublicKey): Promise<number> =
 };
 
 export const calculatePixelsFromBurn = (tokenAmount: number): number => {
-  // Find the best bulk discount
-  const applicableDiscounts = BULK_BURN_DISCOUNTS.filter(
-    discount => tokenAmount >= discount.tokens
-  );
-  
-  if (applicableDiscounts.length === 0) {
-    return tokenAmount; // 1:1 ratio for small amounts
-  }
-  
-  // Get the best discount (highest token amount that applies)
-  const bestDiscount = applicableDiscounts.reduce((best, current) => 
-    current.tokens > best.tokens ? current : best
-  );
-  
-  // Calculate how many full discount packages can be applied
-  const fullPackages = Math.floor(tokenAmount / bestDiscount.tokens);
-  const remainingTokens = tokenAmount % bestDiscount.tokens;
-  
-  // Calculate pixels: full packages with discount + remaining tokens at 1:1
-  const pixelsFromPackages = fullPackages * bestDiscount.pixels;
-  const pixelsFromRemaining = remainingTokens;
-  
-  return pixelsFromPackages + pixelsFromRemaining;
+  // Simple 1:1 ratio for now, can be enhanced later with bulk discounts
+  return tokenAmount;
 };
 
 export const createBurnTransaction = async (
