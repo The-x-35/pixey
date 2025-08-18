@@ -101,13 +101,13 @@ export default function CommentItem({ comment }: CommentItemProps) {
       <div className="flex-1 space-y-1">
         {/* Name and timestamp */}
         <div className="flex flex-col">
-          <span className="font-medium leading-tight">{shortenWallet(comment.wallet_address)}</span>
-          <span className="text-xs text-muted-foreground leading-tight">
+          <span className="font-medium leading-tight text-white">{shortenWallet(comment.wallet_address)}</span>
+          <span className="text-xs text-gray-400 leading-tight">
             {formatDate(comment.created_at)}
           </span>
         </div>
         {/* Comment text */}
-        <p className="text-sm break-words break-all whitespace-pre-line overflow-wrap-anywhere">
+        <p className="text-sm break-words break-all whitespace-pre-line overflow-wrap-anywhere text-white">
           {comment.content}
         </p>
       </div>

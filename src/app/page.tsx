@@ -20,6 +20,18 @@ function GameContent() {
   const [isCommentsVisible, setIsCommentsVisible] = useState(false);
   const [selectedColor, setSelectedColor] = useState<string>(PIXEL_COLORS[0]);
   const [selectedPixel, setSelectedPixel] = useState<{ x: number; y: number } | null>(null);
+
+  // Keyboard shortcut to toggle chat
+  useEffect(() => {
+    const handleKeyPress = (event: KeyboardEvent) => {
+      if (event.key.toLowerCase() === 'c' && !event.ctrlKey && !event.metaKey) {
+        setIsCommentsVisible(prev => !prev);
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyPress);
+    return () => document.removeEventListener('keydown', handleKeyPress);
+  }, []);
   
   const handlePlacePixel = async () => {
     if (!selectedPixel) return;

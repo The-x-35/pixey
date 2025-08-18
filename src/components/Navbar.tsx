@@ -183,9 +183,9 @@ export default function Navbar({ className, isAuthenticated }: NavbarProps) {
         </div>
 
         {/* Right side - Actions & Wallet */}
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-3">
           {/* Pixels Placed Stats */}
-          <div className="flex items-center space-x-2 bg-white/10 rounded-lg px-2 py-1 border border-white/20">
+          <div className="flex items-center space-x-2 bg-white/10 rounded-lg px-3 py-2 border border-white/20 h-10">
             <div className="text-center">
               <div className="text-sm text-white">
                 <span className="text-gray-300">Pixels Placed: </span>
@@ -197,10 +197,11 @@ export default function Navbar({ className, isAuthenticated }: NavbarProps) {
           </div>
           
           {/* Total Burned Stats */}
-          <div className="flex items-center space-x-2 bg-white/10 rounded-lg px-2 py-1 border border-white/20">
+          <div className="flex items-center space-x-2 bg-white/10 rounded-lg px-3 py-2 border border-white/20 h-10">
             <div className="text-center">
               <div className="text-sm font-bold text-white">
-                🔥Burned {formatLargeNumber(totalBurnedTokens)} $VIBEY              </div>
+                🔥Burned {formatLargeNumber(totalBurnedTokens)} $VIBEY
+              </div>
             </div>
           </div>
           
@@ -209,7 +210,7 @@ export default function Navbar({ className, isAuthenticated }: NavbarProps) {
             onClick={openStats}
             variant="outline"
             size="sm"
-            className="bg-white/10 border-white/20 text-white hover:bg-white/20 text-sm px-2 py-1"
+            className="bg-white/10 border-white/20 text-white hover:bg-white/20 text-sm px-3 py-2 h-10"
           >
             <Trophy className="h-3 w-3 mr-1" />
             Leaderboard
@@ -217,20 +218,20 @@ export default function Navbar({ className, isAuthenticated }: NavbarProps) {
 
           {/* Wallet Section */}
           {publicKey && isAuthenticated ? (
-            <div className="flex items-center space-x-1">
+            <div className="flex items-center space-x-2">
               {/* Get Pixels Button */}
               <Button
                 onClick={() => setShowGetPixels(true)}
                 variant="outline"
                 size="sm"
-                className="bg-yellow-500/20 border-yellow-500/30 text-yellow-400 hover:bg-yellow-500/30 text-sm px-1.5 py-0.5"
+                className="bg-yellow-500/20 border-yellow-500/30 text-yellow-400 hover:bg-yellow-500/30 text-sm px-3 py-2 h-10"
               >
                 <Coins className="h-3 w-3 mr-1" />
                 Get Pixels
               </Button>
 
               {/* User Info */}
-              <div className="flex items-center space-x-1.5 bg-white/10 rounded-lg px-1.5 py-0.5">
+              <div className="flex items-center space-x-2 bg-white/10 rounded-lg px-3 py-2 h-10">
                 <img
                   src={getAvatarUrl()}
                   alt="Avatar"
@@ -248,7 +249,7 @@ export default function Navbar({ className, isAuthenticated }: NavbarProps) {
                   onClick={copyAddress}
                   variant="ghost"
                   size="sm"
-                  className="h-4 w-4 p-0 text-gray-400 hover:text-white"
+                  className="h-4 w-4 p-0 text-gray-400 hover:text-white ml-1"
                 >
                   <Copy className="h-2 w-2" />
                 </Button>
@@ -259,13 +260,13 @@ export default function Navbar({ className, isAuthenticated }: NavbarProps) {
                 onClick={handleDisconnect}
                 variant="ghost"
                 size="sm"
-                className="text-gray-400 hover:text-white h-4 w-4 p-0"
+                className="text-gray-400 hover:text-white h-10 w-10 p-0"
               >
-                <LogOut className="h-2 w-2" />
+                <LogOut className="h-3 w-3" />
               </Button>
             </div>
           ) : (
-            <WalletMultiButton className="bg-purple-600 hover:bg-purple-700 text-white" />
+            <WalletMultiButton className="bg-purple-600 hover:bg-purple-700 text-white px-3 py-2 h-10 !h-10 [&_button]:!py-1 [&_button]:!h-10 [&_button]:!min-h-[40px] [&_button]:!max-h-[40px] [&_button]:!leading-[40px]" />
           )}
         </div>
       </nav>

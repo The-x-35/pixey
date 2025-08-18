@@ -2,9 +2,10 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { useWalletModal } from '@solana/wallet-adapter-react-ui';
+import { Send } from 'lucide-react';
 
 interface CommentInputProps {
   onSubmit: (content: string, walletAddress: string) => Promise<void>;
@@ -34,20 +35,25 @@ export default function CommentInput({ onSubmit, isSubmitting }: CommentInputPro
   };
 
   return (
-    <div className="mt-4 pt-4 border-t border-[#262626]">
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <Textarea
-          placeholder="Send it to the..."
+    <div className="mt-4 pt-4 pb-8 border-t border-[#262626]">
+      <form onSubmit={handleSubmit} className="flex items-center space-x-2">
+        <Input
+          placeholder="Send it..."
           value={comment}
           onChange={(e) => setComment(e.target.value)}
-          className="min-h-[100px] resize-none focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 border-[#262626]"
+          className="flex-1 border-[#262626] text-white placeholder:text-gray-400 bg-black focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
         />
         <Button 
           type="submit" 
-          className='w-full bg-[#3405EE] hover:bg-[#2804cc] text-white' 
+          size="sm"
+          className='bg-[#3405EE] hover:bg-[#2804cc] text-white p-2 h-10 w-10' 
           disabled={isSubmitting || !comment.trim()}
         >
-          {isSubmitting ? 'Posting...' : 'Post'}
+          {isSubmitting ? (
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+          ) : (
+            <Send className="h-4 w-4" />
+          )}
         </Button>
       </form>
     </div>
