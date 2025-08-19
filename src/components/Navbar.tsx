@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Card, CardContent } from '@/components/ui/card';
 import { getTotalBurnedTokens } from '@/constants';
 import GetPixelsModal from './GetPixelsModal';
+import ConnectXButton from './ConnectXButton';
 
 interface NavbarProps {
   className?: string;
@@ -21,7 +22,7 @@ export default function Navbar({ className, isAuthenticated }: NavbarProps) {
   const { publicKey, disconnect } = useWallet();
   const { user, pixelBoard } = useGameStore();
   const [showTopPlayers, setShowTopPlayers] = useState(false);
-  const [topPlayers, setTopPlayers] = useState<Array<{wallet_address: string, total_pixels_placed: number, free_pixels: number, total_tokens_burned: string}>>([]);
+  const [topPlayers, setTopPlayers] = useState<Array<{wallet_address: string, total_pixels_placed: number, free_pixels: number, total_tokens_burned: string, username?: string, profile_picture?: string}>>([]);
   const [totalBurnedTokens, setTotalBurnedTokens] = useState(0);
   const [currentNotification, setCurrentNotification] = useState<string | null>(null);
   const [currentNotificationType, setCurrentNotificationType] = useState<string>('pixel_placed');
@@ -91,6 +92,10 @@ export default function Navbar({ className, isAuthenticated }: NavbarProps) {
 
   const getAvatarUrl = () => {
     if (!publicKey) return "";
+    // Use profile picture if available, otherwise fallback to generated avatar
+    if (user?.profile_picture) {
+      return user.profile_picture;
+    }
     return `https://api.dicebear.com/9.x/pixel-art/svg?seed=${publicKey.toString()}`;
   };
 
@@ -230,6 +235,13 @@ export default function Navbar({ className, isAuthenticated }: NavbarProps) {
                 Get Pixels
               </Button>
 
+              {/* Connect X Button */}
+              <ConnectXButton
+                variant="outline"
+                size="sm"
+                className="bg-blue-500/20 border-blue-500/30 text-blue-400 hover:bg-blue-500/30 text-sm px-3 py-2 h-10"
+              />
+
               {/* User Info */}
               <div className="flex items-center space-x-2 bg-white/10 rounded-lg px-3 py-2 h-10">
                 <img
@@ -239,7 +251,7 @@ export default function Navbar({ className, isAuthenticated }: NavbarProps) {
                 />
                 <div className="text-right">
                   <div className="text-sm font-medium text-white">
-                    {publicKey.toString().slice(0, 4)}...{publicKey.toString().slice(-4)}
+                    {user?.username ? user.username : publicKey.toString().slice(0, 4) + '...' + publicKey.toString().slice(-4)}
                   </div>
                   <div className="text-sm text-gray-300">
                     {user?.total_pixels_placed || 0} placed • {user?.free_pixels || 0} left
@@ -292,13 +304,13 @@ export default function Navbar({ className, isAuthenticated }: NavbarProps) {
                           {index + 1}
                         </div>
                         <img
-                          src={`https://api.dicebear.com/9.x/pixel-art/svg?seed=${player.wallet_address}`}
+                          src={player.profile_picture || `https://api.dicebear.com/9.x/pixel-art/svg?seed=${player.wallet_address}`}
                           alt="Avatar"
                           className="h-8 w-8 rounded-full"
                         />
                         <div>
                           <div className="font-medium text-white">
-                            {player.wallet_address.slice(0, 6)}...{player.wallet_address.slice(-4)}
+                            {player.username ? player.username : `${player.wallet_address.slice(0, 6)}...${player.wallet_address.slice(-4)}`}
                           </div>
                         </div>
                       </div>

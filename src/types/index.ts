@@ -3,9 +3,11 @@ import { PublicKey } from '@solana/web3.js';
 // User types
 export interface User {
   wallet_address: string;
+  username: string;
   free_pixels: number;
   total_pixels_placed: number;
   total_tokens_burned: number;
+  profile_picture?: string;
   created_at: Date;
   updated_at: Date;
 }

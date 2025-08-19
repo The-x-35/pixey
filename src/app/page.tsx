@@ -10,6 +10,7 @@ import Chat from '@/components/Chat';
 import ToastContainer from '@/components/Toast';
 import useGameStore from '@/store/gameStore';
 import { useWalletAuth } from '@/hooks/useWalletAuth';
+import { useXConnection } from '@/hooks/useXConnection';
 import { PIXEL_COLORS } from '@/constants';
 
 function GameContent() {
@@ -20,6 +21,9 @@ function GameContent() {
   const [isCommentsVisible, setIsCommentsVisible] = useState(false);
   const [selectedColor, setSelectedColor] = useState<string>(PIXEL_COLORS[0]);
   const [selectedPixel, setSelectedPixel] = useState<{ x: number; y: number } | null>(null);
+  
+  // Handle X connection and profile updates
+  useXConnection();
 
   // Keyboard shortcut to toggle chat
   useEffect(() => {
