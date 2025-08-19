@@ -62,18 +62,11 @@ export default function ConnectXButton({
     );
   }
 
-  if (session?.user?.twitterUsername) {
+  if (session?.user?.username) {
     return (
-      <div className="flex items-center space-x-2">
-        <Button
-          onClick={handleDisconnectX}
-          variant="outline"
-          size={size}
-          className={`text-red-600 border-red-600 hover:bg-red-50 ${className}`}
-        >
-          <LogOut className="h-4 w-4 mr-2" />
-          Disconnect X
-        </Button>
+      <div className="flex items-center gap-2 text-green-600">
+        <Twitter className="h-4 w-4" />
+        <span className="text-sm font-medium">X Connected</span>
       </div>
     );
   }
@@ -82,9 +75,9 @@ export default function ConnectXButton({
     <Button
       onClick={handleConnectX}
       disabled={isConnecting || !publicKey}
-      variant={variant}
-      size={size}
-      className={`bg-blue-500 hover:bg-blue-600 text-white ${className}`}
+      variant="ghost"
+      size="sm"
+      className="w-full justify-start text-sm px-2 py-1.5 h-8 hover:bg-blue-50"
     >
       <Twitter className="h-4 w-4 mr-2" />
       {isConnecting ? 'Connecting...' : 'Connect X'}

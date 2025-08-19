@@ -3,15 +3,31 @@
 import { useState, useEffect } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
-import useGameStore from '@/store/gameStore';
-import { cn } from '@/lib/utils';
-import { Copy, LogOut, Trophy, Coins } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Card, CardContent } from '@/components/ui/card';
+import ConnectXButton from './ConnectXButton';
 import { getTotalBurnedTokens } from '@/constants';
 import GetPixelsModal from './GetPixelsModal';
-import ConnectXButton from './ConnectXButton';
+import useGameStore from '@/store/gameStore';
+import { cn } from '@/lib/utils';
+import { 
+  Trophy, 
+  Coins, 
+  Copy, 
+  LogOut, 
+  ChevronDown,
+  User,
+  Twitter
+} from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { useSession, signOut } from 'next-auth/react';
 
 interface NavbarProps {
   className?: string;
@@ -21,6 +37,7 @@ interface NavbarProps {
 export default function Navbar({ className, isAuthenticated }: NavbarProps) {
   const { publicKey, disconnect } = useWallet();
   const { user, pixelBoard } = useGameStore();
+  const { data: session } = useSession();
   const [showTopPlayers, setShowTopPlayers] = useState(false);
   const [topPlayers, setTopPlayers] = useState<Array<{wallet_address: string, total_pixels_placed: number, free_pixels: number, total_tokens_burned: string, username?: string, profile_picture?: string}>>([]);
   const [totalBurnedTokens, setTotalBurnedTokens] = useState(0);
@@ -235,47 +252,68 @@ export default function Navbar({ className, isAuthenticated }: NavbarProps) {
                 Get Pixels
               </Button>
 
-              {/* Connect X Button */}
-              <ConnectXButton
-                variant="outline"
-                size="sm"
-                className="bg-blue-500/20 border-blue-500/30 text-blue-400 hover:bg-blue-500/30 text-sm px-3 py-2 h-10"
-              />
-
-              {/* User Info */}
-              <div className="flex items-center space-x-2 bg-white/10 rounded-lg px-3 py-2 h-10">
-                <img
-                  src={getAvatarUrl()}
-                  alt="Avatar"
-                  className="h-5 w-5 rounded-full"
-                />
-                <div className="text-right">
-                  <div className="text-sm font-medium text-white">
-                    {user?.username ? user.username : publicKey.toString().slice(0, 4) + '...' + publicKey.toString().slice(-4)}
+              {/* Account Dropdown */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="bg-white/10 border-white/20 text-white hover:bg-white/20 text-sm px-3 py-2 h-10 flex items-center gap-2"
+                  >
+                    <img
+                      src={getAvatarUrl()}
+                      alt="Avatar"
+                      className="h-5 w-5 rounded-full"
+                    />
+                    <div className="text-right">
+                      <div className="text-sm font-medium text-white">
+                        {user?.username ? user.username : publicKey.toString().slice(0, 4) + '...' + publicKey.toString().slice(-4)}
+                      </div>
+                      <div className="text-sm text-gray-300">
+                        {user?.total_pixels_placed || 0} placed • {user?.free_pixels || 0} left
+                      </div>
+                    </div>
+                    <ChevronDown className="h-3 w-3" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuItem onClick={copyAddress} className="flex items-center gap-2">
+                    <Copy className="h-4 w-4" />
+                    Copy Address
+                  </DropdownMenuItem>
+                  
+                  <DropdownMenuSeparator />
+                  
+                  {/* X Connection Section */}
+                  <div className="px-2 py-1.5">
+                    {session?.user?.username ? (
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2 text-green-600">
+                          <Twitter className="h-4 w-4" />
+                          <span className="text-sm font-medium">X Connected</span>
+                        </div>
+                        <Button
+                          onClick={() => signOut({ callbackUrl: window.location.origin })}
+                          variant="ghost"
+                          size="sm"
+                          className="text-red-600 hover:bg-red-50 px-2 py-1 h-6 text-xs"
+                        >
+                          Disconnect
+                        </Button>
+                      </div>
+                    ) : (
+                      <ConnectXButton />
+                    )}
                   </div>
-                  <div className="text-sm text-gray-300">
-                    {user?.total_pixels_placed || 0} placed • {user?.free_pixels || 0} left
-                  </div>
-                </div>
-                <Button
-                  onClick={copyAddress}
-                  variant="ghost"
-                  size="sm"
-                  className="h-4 w-4 p-0 text-gray-400 hover:text-white ml-1"
-                >
-                  <Copy className="h-2 w-2" />
-                </Button>
-              </div>
-
-              {/* Disconnect Button */}
-              <Button
-                onClick={handleDisconnect}
-                variant="ghost"
-                size="sm"
-                className="text-gray-400 hover:text-white h-10 w-10 p-0"
-              >
-                <LogOut className="h-3 w-3" />
-              </Button>
+                  
+                  <DropdownMenuSeparator />
+                  
+                  <DropdownMenuItem onClick={handleDisconnect} className="flex items-center gap-2 text-red-600">
+                    <LogOut className="h-4 w-4" />
+                    Disconnect Wallet
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           ) : (
             <WalletMultiButton className="bg-purple-600 hover:bg-purple-700 text-white px-3 py-2 h-10 !h-10 [&_button]:!py-1 [&_button]:!h-10 [&_button]:!min-h-[40px] [&_button]:!max-h-[40px] [&_button]:!leading-[40px]" />

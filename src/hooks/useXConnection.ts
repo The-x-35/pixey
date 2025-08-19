@@ -9,12 +9,17 @@ export const useXConnection = () => {
   const router = useRouter();
 
   useEffect(() => {
+    console.log('useXConnection hook - Session:', session);
+    console.log('useXConnection hook - PublicKey:', publicKey?.toString());
+    
     // Check if user just connected X and we have wallet info
-    if (session?.user?.twitterUsername && publicKey) {
+    if (session?.user?.username && publicKey) {
+      console.log('Found X session and wallet, checking URL params...');
       const urlParams = new URLSearchParams(window.location.search);
       const walletParam = urlParams.get('wallet');
       
       if (walletParam === publicKey.toString()) {
+        console.log('Wallet param matches, updating profile...');
         // Update user profile with X info
         updateProfile();
         // Clean up URL
@@ -24,7 +29,7 @@ export const useXConnection = () => {
   }, [session, publicKey, router]);
 
   const updateProfile = async () => {
-    if (!session?.user?.twitterUsername || !publicKey) return;
+    if (!session?.user?.username || !publicKey) return;
 
     try {
       const response = await fetch('/api/update-profile', {
@@ -34,15 +39,15 @@ export const useXConnection = () => {
         },
         body: JSON.stringify({
           wallet_address: publicKey.toString(),
-          username: session.user.twitterUsername,
-          profile_picture: session.user.twitterProfilePicture,
+          username: session.user.username,
+          profile_picture: session.user.profilePicture,
         }),
       });
 
       if (response.ok) {
         console.log('Profile updated successfully');
-        // Optionally refresh the page or update state
-        window.location.reload();
+        // Redirect back to original URL without wallet parameter
+        router.replace(window.location.pathname);
       }
     } catch (error) {
       console.error('Error updating profile:', error);

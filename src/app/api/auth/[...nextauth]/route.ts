@@ -17,16 +17,16 @@ declare module "next-auth" {
       name?: string | null;
       email?: string | null;
       image?: string | null;
-      twitterUsername?: string;
-      twitterProfilePicture?: string;
+      username?: string; // Twitter username
+      profilePicture?: string; // Twitter profile picture
     };
   }
 }
 
 declare module "next-auth/jwt" {
   interface JWT {
-    twitterUsername?: string;
-    twitterProfilePicture?: string;
+    username?: string; // Twitter username
+    profilePicture?: string; // Twitter profile picture
   }
 }
 
@@ -40,30 +40,62 @@ const authOptions: NextAuthOptions = {
   ],
   callbacks: {
     async signIn({ user, account, profile }) {
-      // Just verify the user can authenticate with X
-      // No database updates needed here
-      return true;
+      try {
+        console.log('SignIn callback:', { user: user?.name, provider: account?.provider });
+        return true;
+      } catch (error) {
+        console.error('SignIn callback error:', error);
+        return false;
+      }
     },
     async session({ session, token }) {
-      if (token.twitterUsername) {
-        session.user.twitterUsername = token.twitterUsername;
-        session.user.twitterProfilePicture = token.twitterProfilePicture;
+      try {
+        console.log('Session callback - token:', token);
+        if (token.username) {
+          session.user.username = token.username;
+          session.user.profilePicture = token.profilePicture;
+        }
+        return session;
+      } catch (error) {
+        console.error('Session callback error:', error);
+        return session;
       }
-      return session;
     },
     async jwt({ token, account, profile }) {
-      if (account?.provider === 'twitter' && profile) {
-        // Just store username and profile picture
-        const twitterProfile = profile as TwitterProfile;
-        token.twitterUsername = twitterProfile.username;
-        token.twitterProfilePicture = twitterProfile.profile_image_url;
+      try {
+        console.log('JWT callback - profile:', profile);
+        console.log('JWT callback - account:', account);
+        
+        if (account?.provider === 'twitter' && profile) {
+          // Handle the actual Twitter profile structure from logs
+          let twitterUsername = '';
+          let twitterProfilePicture = '';
+          
+          // The profile structure from logs shows: OAuthProfile.data.{username, profile_image_url}
+          if (profile && typeof profile === 'object' && 'data' in profile) {
+            const profileData = (profile as any).data;
+            twitterUsername = profileData?.username || '';
+            twitterProfilePicture = profileData?.profile_image_url || '';
+          }
+          
+          console.log('Extracted Twitter data:', { username: twitterUsername, profilePicture: twitterProfilePicture });
+          
+          if (twitterUsername) {
+            token.username = twitterUsername;
+            token.profilePicture = twitterProfilePicture;
+          }
+        }
+        return token;
+      } catch (error) {
+        console.error('JWT callback error:', error);
+        return token;
       }
-      return token;
     },
   },
   session: {
     strategy: 'jwt',
   },
+  debug: process.env.NODE_ENV === 'development',
 };
 
 const handler = NextAuth(authOptions);
