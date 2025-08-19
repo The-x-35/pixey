@@ -72,12 +72,11 @@ export async function POST(request: NextRequest) {
       );
 
       if (userResult.rows.length === 0) {
-        // Create new user with generated username
-        const username = `User_${wallet_address.slice(0, 8)}`;
+        // Create new user with wallet address as username
         await client.query(`
           INSERT INTO pixey_users (wallet_address, username, free_pixels, total_pixels_placed, total_tokens_burned, auth_message, auth_signature, last_login)
           VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
-        `, [wallet_address, username, 10, 0, 0, message, signature]);
+        `, [wallet_address, wallet_address, 10, 0, 0, message, signature]);
       } else {
         // Update existing user's auth info and last login
         await client.query(`

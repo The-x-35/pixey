@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
       `INSERT INTO pixey_users (wallet_address, username, free_pixels, total_tokens_burned, created_at, updated_at) 
        VALUES ($1, $2, $3, $4, NOW(), NOW()) 
        RETURNING *`,
-      [wallet_address, `User_${wallet_address.slice(0, 6)}`, FREE_PIXELS_PER_USER, 0]
+      [wallet_address, wallet_address, FREE_PIXELS_PER_USER, 0]
     );
 
     if (newUser.rows.length === 0) {

@@ -5,9 +5,9 @@ export async function POST(request: NextRequest) {
   try {
     const { wallet_address, username, profile_picture } = await request.json();
 
-    if (!wallet_address || !username) {
+    if (!wallet_address) {
       return NextResponse.json(
-        { success: false, error: 'Wallet address and username are required' },
+        { success: false, error: 'Wallet address is required' },
         { status: 400 }
       );
     }
@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
        SET username = $1, profile_picture = $2, updated_at = NOW()
        WHERE wallet_address = $3 
        RETURNING *`,
-      [username, profile_picture || null, wallet_address]
+      [username || wallet_address, profile_picture || null, wallet_address]
     );
 
     if (updatedUser.rows.length === 0) {

@@ -25,7 +25,7 @@ export default function CommentItem({ comment }: CommentItemProps) {
   const shortenWallet = (wallet: string) => {
     if (!wallet) return '';
     if (wallet.length <= 7) return wallet;
-    return `${wallet.slice(0, 4)}...${wallet.slice(-3)}`;
+    return `${wallet.slice(0, 4)}...${wallet.slice(-4)}`;
   };
 
   const formatDate = (dateString: string) => {

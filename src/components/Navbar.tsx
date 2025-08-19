@@ -185,7 +185,7 @@ export default function Navbar({ className, isAuthenticated }: NavbarProps) {
           
           {/* Pixel Placement Notification */}
           {currentNotification && (
-            <div className={`rounded-lg px-3 py-2 border backdrop-blur-md ${
+            <div className={`rounded-lg px-3 py-2 border backdrop-blur-md h-12 flex items-center ${
               currentNotificationColor === 'green' ? 'bg-green-400/20 border-green-400/40 shadow-lg shadow-green-400/20' :
               currentNotificationColor === 'yellow' ? 'bg-yellow-400/20 border-yellow-400/40 shadow-lg shadow-yellow-400/20' :
               currentNotificationColor === 'red' ? 'bg-red-400/20 border-red-400/40 shadow-lg shadow-red-400/20' :
@@ -204,10 +204,21 @@ export default function Navbar({ className, isAuthenticated }: NavbarProps) {
           )}
         </div>
 
-        {/* Right side - Actions & Wallet */}
+        {/* Middle - Pixels and Burned Stats */}
         <div className="flex items-center space-x-3">
+          {/* Total Burned Stats */}
+          <div className="flex items-center space-x-2 bg-white/10 rounded-lg px-3 py-2 border border-white/20 h-12">
+            <div className="text-center">
+              <div className="text-sm text-white">
+                🔥 <span className="bg-gradient-to-r from-[#FFA371] to-[#EE5705] bg-clip-text text-transparent font-bold">
+                  {formatLargeNumber(totalBurnedTokens)}
+                </span> $VIBEY Burned
+              </div>
+            </div>
+          </div>
+          
           {/* Pixels Placed Stats */}
-          <div className="flex items-center space-x-2 bg-white/10 rounded-lg px-3 py-2 border border-white/20 h-10">
+          <div className="flex items-center space-x-2 bg-white/10 rounded-lg px-3 py-2 border border-white/20 h-12">
             <div className="text-center">
               <div className="text-sm text-white">
                 <span className="text-gray-300">Pixels Placed: </span>
@@ -217,27 +228,10 @@ export default function Navbar({ className, isAuthenticated }: NavbarProps) {
               </div>
             </div>
           </div>
-          
-          {/* Total Burned Stats */}
-          <div className="flex items-center space-x-2 bg-white/10 rounded-lg px-3 py-2 border border-white/20 h-10">
-            <div className="text-center">
-              <div className="text-sm font-bold text-white">
-                🔥Burned {formatLargeNumber(totalBurnedTokens)} $VIBEY
-              </div>
-            </div>
-          </div>
-          
-          {/* Leaderboard Button */}
-          <Button
-            onClick={openStats}
-            variant="outline"
-            size="sm"
-            className="bg-white/10 border-white/20 text-white hover:bg-white/20 text-sm px-3 py-2 h-10"
-          >
-            <Trophy className="h-3 w-3 mr-1" />
-            Leaderboard
-          </Button>
+        </div>
 
+        {/* Right side - Leaderboard and Account */}
+        <div className="flex items-center space-x-3">
           {/* Wallet Section */}
           {publicKey && isAuthenticated ? (
             <div className="flex items-center space-x-2">
@@ -246,7 +240,7 @@ export default function Navbar({ className, isAuthenticated }: NavbarProps) {
                 onClick={() => setShowGetPixels(true)}
                 variant="outline"
                 size="sm"
-                className="bg-yellow-500/20 border-yellow-500/30 text-yellow-400 hover:bg-yellow-500/30 text-sm px-3 py-2 h-10"
+                className="bg-yellow-500/20 border-yellow-500/30 text-yellow-400 hover:bg-yellow-500/30 text-sm px-3 py-2 h-12"
               >
                 <Coins className="h-3 w-3 mr-1" />
                 Get Pixels
@@ -258,7 +252,7 @@ export default function Navbar({ className, isAuthenticated }: NavbarProps) {
                   <Button
                     variant="outline"
                     size="sm"
-                    className="bg-white/10 border-white/20 text-white hover:bg-white/20 text-sm px-3 py-2 h-10 flex items-center gap-2"
+                    className="bg-white/10 border-white/20 text-white hover:bg-white/20 text-sm px-3 py-2 h-12 flex items-center gap-2"
                   >
                     <img
                       src={getAvatarUrl()}
@@ -267,7 +261,7 @@ export default function Navbar({ className, isAuthenticated }: NavbarProps) {
                     />
                     <div className="text-right">
                       <div className="text-sm font-medium text-white">
-                        {user?.username ? user.username : publicKey.toString().slice(0, 4) + '...' + publicKey.toString().slice(-4)}
+                        {user?.username && user.username !== user?.wallet_address ? user.username : publicKey.toString().slice(0, 4) + '...' + publicKey.toString().slice(-4)}
                       </div>
                       <div className="text-sm text-gray-300">
                         {user?.total_pixels_placed || 0} placed • {user?.free_pixels || 0} left
@@ -348,7 +342,7 @@ export default function Navbar({ className, isAuthenticated }: NavbarProps) {
                         />
                         <div>
                           <div className="font-medium text-white">
-                            {player.username ? player.username : `${player.wallet_address.slice(0, 6)}...${player.wallet_address.slice(-4)}`}
+                            {player.username && player.username !== player.wallet_address ? player.username : player.wallet_address.slice(0, 4) + '...' + player.wallet_address.slice(-4)}
                           </div>
                         </div>
                       </div>

@@ -12,6 +12,11 @@ import useGameStore from '@/store/gameStore';
 import { useWalletAuth } from '@/hooks/useWalletAuth';
 import { useXConnection } from '@/hooks/useXConnection';
 import { PIXEL_COLORS } from '@/constants';
+import { Trophy } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Card, CardContent } from '@/components/ui/card';
+import { getTotalBurnedTokens } from '@/constants';
+import GetPixelsModal from '@/components/GetPixelsModal';
 
 function GameContent() {
   const { publicKey, connected } = useWallet();
@@ -21,9 +26,35 @@ function GameContent() {
   const [isCommentsVisible, setIsCommentsVisible] = useState(false);
   const [selectedColor, setSelectedColor] = useState<string>(PIXEL_COLORS[0]);
   const [selectedPixel, setSelectedPixel] = useState<{ x: number; y: number } | null>(null);
+  const [showTopPlayers, setShowTopPlayers] = useState(false);
+  const [topPlayers, setTopPlayers] = useState<Array<{wallet_address: string, total_pixels_placed: number, free_pixels: number, total_tokens_burned: string, username?: string, profile_picture?: string}>>([]);
+  const [showGetPixels, setShowGetPixels] = useState(false);
   
   // Handle X connection and profile updates
   useXConnection();
+
+  // Fetch top players
+  const fetchTopPlayers = async () => {
+    try {
+      const response = await fetch('/api/users');
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success && result.data) {
+          const sortedUsers = result.data
+            .filter((user: any) => user.total_pixels_placed > 0)
+            .slice(0, 10);
+          setTopPlayers(sortedUsers);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching top players:', error);
+    }
+  };
+
+  const openStats = () => {
+    setShowTopPlayers(true);
+    fetchTopPlayers();
+  };
 
   // Keyboard shortcut to toggle chat
   useEffect(() => {
@@ -96,47 +127,45 @@ function GameContent() {
       
       {/* Permanent Color Palette at Bottom */}
       <div className="fixed bottom-0 left-0 right-0 bg-transparent backdrop-blur-md border-t border-[#262626] p-4 z-40">
-        <div className="max-w-6xl mx-auto">
-          <div className="flex items-center justify-between">
-            {/* Color Palette */}
-            <div className="flex items-center space-x-3">
-              <span className="text-white font-medium text-sm">Colors:</span>
-              <div className="flex space-x-2">
-                {PIXEL_COLORS.map((color) => (
-                  <button
-                    key={color}
-                    onClick={() => setSelectedColor(color)}
-                    className={`w-8 h-8 rounded-lg border-2 transition-all duration-200 hover:scale-110 ${
-                      selectedColor === color ? 'border-white shadow-lg' : 'border-[#262626]'
-                    }`}
-                    style={{ backgroundColor: color }}
-                    title={`Select ${color}`}
-                  />
-                ))}
-              </div>
+        <div className="flex items-center justify-center space-x-8">
+          {/* Color Palette */}
+          <div className="flex items-center space-x-3">
+            <span className="text-white font-medium text-sm mr-2">Colors:</span>
+            <div className="flex space-x-2">
+              {PIXEL_COLORS.map((color) => (
+                <button
+                  key={color}
+                  onClick={() => setSelectedColor(color)}
+                  className={`w-10 h-10 rounded-lg border-2 transition-all duration-200 hover:scale-110 ${
+                    selectedColor === color ? 'border-white shadow-lg' : 'border-[#262626]'
+                  }`}
+                  style={{ backgroundColor: color }}
+                  title={`Select ${color}`}
+                />
+              ))}
             </div>
-            
-            {/* Place Pixel Button */}
-            <button
-              onClick={handlePlacePixel}
-              disabled={!selectedPixel}
-              className="text-white px-6 py-2 rounded-lg font-medium transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
-              style={{
-                background: 'linear-gradient(to right, #EE00FF 0%, #EE5705 66%, #EE05E7 100%)',
-                color: 'white',
-                padding: '8px 24px',
-                borderRadius: '8px',
-                fontSize: '14px',
-                fontWeight: '500',
-                boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
-                transition: 'all 0.2s',
-                border: 'none',
-                cursor: 'pointer',
-              }}
-            >
-              Place Pixel
-            </button>
           </div>
+            
+          {/* Place Pixel Button */}
+          <button
+            onClick={handlePlacePixel}
+            disabled={!selectedPixel}
+            className="text-white px-6 py-2 rounded-lg font-medium transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+            style={{
+              background: 'linear-gradient(to right, #EE00FF 0%, #EE5705 66%, #EE05E7 100%)',
+              color: 'white',
+              padding: '8px 24px',
+              borderRadius: '8px',
+              fontSize: '14px',
+              fontWeight: '500',
+              boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+              transition: 'all 0.2s',
+              border: 'none',
+              cursor: 'pointer',
+            }}
+          >
+            Place Pixel
+          </button>
         </div>
       </div>
       
@@ -162,8 +191,81 @@ function GameContent() {
           </svg>
         </button>
       )}
-      
 
+      {/* Floating Leaderboard Button - Only show when comments are closed */}
+      {!isCommentsVisible && (
+        <button
+          onClick={openStats}
+          className="fixed top-36 right-4 z-50 text-white p-3 rounded-full shadow-lg transition-all duration-200 hover:scale-110"
+          style={{
+            background: 'linear-gradient(to right, #EE00FF 0%, #EE5705 66%, #EE05E7 100%)',
+            color: 'white',
+            padding: '12px',
+            borderRadius: '50%',
+            boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+            transition: 'all 0.2s',
+            border: 'none',
+            cursor: 'pointer',
+          }}
+          title="Open Leaderboard"
+        >
+          <Trophy className="h-6 w-6" />
+        </button>
+      )}
+      
+      {/* Get Pixels Modal */}
+      <GetPixelsModal 
+        isOpen={showGetPixels} 
+        onClose={() => setShowGetPixels(false)} 
+      />
+
+      {/* Top Players Dialog */}
+      <Dialog open={showTopPlayers} onOpenChange={setShowTopPlayers}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Trophy className="h-6 w-6 text-yellow-500" />
+              Leaderboard
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            {topPlayers.length > 0 ? (
+              topPlayers.map((player, index) => (
+                <Card key={player.wallet_address} className="bg-white/5 border-white/10">
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-3">
+                        <div className="flex items-center justify-center w-8 h-8 bg-gradient-to-r from-yellow-400 to-yellow-600 rounded-full text-black font-bold text-sm">
+                          {index + 1}
+                        </div>
+                        <img
+                          src={player.profile_picture || `https://api.dicebear.com/9.x/pixel-art/svg?seed=${player.wallet_address}`}
+                          alt="Avatar"
+                          className="h-8 w-8 rounded-full"
+                        />
+                        <div>
+                          <div className="font-medium text-white">
+                            {player.username === player.wallet_address ? player.username.slice(0, 4) + '...' + player.username.slice(-4) : player.username}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-sm text-gray-400">Placed pixels</div>
+                        <div className="font-medium text-white">{player.total_pixels_placed}</div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
+            ) : (
+              <div className="text-center py-8 text-gray-400">
+                No players found
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

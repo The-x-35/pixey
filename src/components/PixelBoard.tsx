@@ -384,50 +384,50 @@ export default function PixelBoard({ className, selectedPixel, onPixelSelect }: 
       />
       
       {/* Zoom controls */}
-      <div className="absolute bottom-4 right-4 flex flex-col space-y-2">
+      <div className="absolute bottom-10 right-4 flex flex-col space-y-2">
         <button
           onClick={() => setViewport(prev => ({ 
             ...prev, 
             scale: Math.min(MAX_SCALE, prev.scale * 1.5) 
           }))}
-          className="text-white p-2 rounded-full shadow-lg transition-all duration-200 hover:scale-110"
+          className="text-white p-3 rounded-full shadow-lg transition-all duration-200 hover:scale-110"
           style={{
             background: 'linear-gradient(to right, #EE00FF 0%, #EE5705 66%, #EE05E7 100%)',
             color: 'white',
-            padding: '8px',
+            padding: '12px',
             borderRadius: '50%',
             boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
             transition: 'all 0.2s',
             border: 'none',
             cursor: 'pointer',
-            fontSize: '16px',
-            fontWeight: 'bold',
           }}
           title="Zoom In"
         >
-          +
+          <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+          </svg>
         </button>
         <button
           onClick={() => setViewport(prev => ({ 
             ...prev, 
             scale: Math.max(MIN_SCALE, prev.scale / 1.5) 
           }))}
-          className="text-white p-2 rounded-full shadow-lg transition-all duration-200 hover:scale-110"
+          className="text-white p-3 rounded-full shadow-lg transition-all duration-200 hover:scale-110"
           style={{
             background: 'linear-gradient(to right, #EE00FF 0%, #EE5705 66%, #EE05E7 100%)',
             color: 'white',
-            padding: '8px',
+            padding: '12px',
             borderRadius: '50%',
             boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
             transition: 'all 0.2s',
             border: 'none',
             cursor: 'pointer',
-            fontSize: '16px',
-            fontWeight: 'bold',
           }}
           title="Zoom Out"
         >
-          -
+          <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 12H6" />
+          </svg>
         </button>
         <button
           onClick={() => {
