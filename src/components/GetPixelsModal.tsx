@@ -144,7 +144,7 @@ export default function GetPixelsModal({ isOpen, onClose }: GetPixelsModalProps)
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Coins className="h-5 w-5 text-yellow-500" />
-            Get Pixels
+            Buy Pixels
           </DialogTitle>
         </DialogHeader>
         

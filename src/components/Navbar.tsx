@@ -46,6 +46,7 @@ export default function Navbar({ className, isAuthenticated }: NavbarProps) {
   const [currentNotificationColor, setCurrentNotificationColor] = useState<string>('green');
   const [isShaking, setIsShaking] = useState(false);
   const [showGetPixels, setShowGetPixels] = useState(false);
+  const [isAccountOpen, setIsAccountOpen] = useState(false);
   
   // Fetch total burned tokens on component mount
   useEffect(() => {
@@ -97,6 +98,18 @@ export default function Navbar({ className, isAuthenticated }: NavbarProps) {
     const interval = setInterval(fetchLatestNotification, 5000);
     return () => clearInterval(interval);
   }, [currentNotification]);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (isAccountOpen && !event.target) {
+        setIsAccountOpen(false);
+      }
+    };
+    
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isAccountOpen]);
 
   const handleDisconnect = async () => {
     await disconnect();
@@ -205,9 +218,9 @@ export default function Navbar({ className, isAuthenticated }: NavbarProps) {
         </div>
 
         {/* Middle - Pixels and Burned Stats */}
-        <div className="flex items-center space-x-3">
+        <div className="flex items-center space-x-2">
           {/* Total Burned Stats */}
-          <div className="flex items-center space-x-2 bg-white/10 rounded-lg px-3 py-2 border border-white/20 h-12">
+          <div className="flex items-center space-x-2 bg-white/10 rounded-lg px-2 py-2 border border-white/20 h-12">
             <div className="text-center">
               <div className="text-sm text-white">
                 🔥 <span className="bg-gradient-to-r from-[#FFA371] to-[#EE5705] bg-clip-text text-transparent font-bold">
@@ -218,7 +231,7 @@ export default function Navbar({ className, isAuthenticated }: NavbarProps) {
           </div>
           
           {/* Pixels Placed Stats */}
-          <div className="flex items-center space-x-2 bg-white/10 rounded-lg px-3 py-2 border border-white/20 h-12">
+          <div className="flex items-center space-x-2 bg-white/10 rounded-lg px-2 py-2 border border-white/20 h-12">
             <div className="text-center">
               <div className="text-sm text-white">
                 <span className="text-gray-300">Pixels Placed: </span>
@@ -231,83 +244,87 @@ export default function Navbar({ className, isAuthenticated }: NavbarProps) {
         </div>
 
         {/* Right side - Leaderboard and Account */}
-        <div className="flex items-center space-x-3">
+        <div className="flex items-center space-x-2">
           {/* Wallet Section */}
           {publicKey && isAuthenticated ? (
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-1">
               {/* Get Pixels Button */}
               <Button
                 onClick={() => setShowGetPixels(true)}
                 variant="outline"
                 size="sm"
-                className="bg-yellow-500/20 border-yellow-500/30 text-yellow-400 hover:bg-yellow-500/30 text-sm px-3 py-2 h-12"
+                className="border-yellow-500/30 text-white hover:bg-yellow-500/30 text-sm px-2 py-2 h-12"
+                style={{ backgroundColor: '#FFAE0033' }}
               >
-                <Coins className="h-3 w-3 mr-1" />
-                Get Pixels
+                <Coins className="h-3 w-3 mr-1 text-white" />
+                Buy Pixels
               </Button>
 
               {/* Account Dropdown */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="bg-white/10 border-white/20 text-white hover:bg-white/20 text-sm px-3 py-2 h-12 flex items-center gap-2"
-                  >
-                    <img
-                      src={getAvatarUrl()}
-                      alt="Avatar"
-                      className="h-5 w-5 rounded-full"
-                    />
-                    <div className="text-right">
-                      <div className="text-sm font-medium text-white">
-                        {user?.username && user.username !== user?.wallet_address ? user.username : publicKey.toString().slice(0, 4) + '...' + publicKey.toString().slice(-4)}
-                      </div>
-                      <div className="text-sm text-gray-300">
-                        {user?.total_pixels_placed || 0} placed • {user?.free_pixels || 0} left
+              <div className="relative">
+                <Button
+                  onClick={() => setIsAccountOpen(!isAccountOpen)}
+                  variant="outline"
+                  size="sm"
+                  className="border-white/20 text-white hover:bg-white/20 text-sm px-2 py-2 h-12 flex items-center gap-2"
+                  style={{ backgroundColor: '#3405EE66' }}
+                >
+                  <img
+                    src={getAvatarUrl()}
+                    alt="Avatar"
+                    className="h-7 w-7 rounded-full"
+                  />
+                  <div className="text-left">
+                    <div className="text-base font-medium text-white">
+                      {user?.username && user.username !== user?.wallet_address ? user.username : publicKey.toString().slice(0, 4) + '...' + publicKey.toString().slice(-4)}
+                    </div>
+                    <div className="text-base text-gray-300">
+                      {user?.total_pixels_placed || 0} placed • {user?.free_pixels || 0} left
+                    </div>
+                  </div>
+                  <ChevronDown className="h-3 w-3" />
+                </Button>
+                
+                {/* Custom Dropdown Content */}
+                {isAccountOpen && (
+                  <div className="absolute right-0 top-full mt-2 w-56 rounded-md shadow-lg border border-gray-700 z-[999999]" style={{ backgroundColor: '#1F1F1F' }}>
+                    <div className="py-1">
+                      {/* X Connection Section */}
+                      <div className="px-3 py-1.5">
+                        {session?.user?.username ? (
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2 text-green-600">
+                              <Twitter className="h-4 w-4" />
+                              <span className="text-sm font-medium">X Connected</span>
+                            </div>
+                            <Button
+                              onClick={() => signOut({ callbackUrl: window.location.origin })}
+                              variant="ghost"
+                              size="sm"
+                              className="text-red-600 hover:bg-red-50 px-2 py-1 h-6 text-xs"
+                            >
+                              Disconnect
+                            </Button>
+                          </div>
+                        ) : (
+                          <ConnectXButton />
+                        )}
                       </div>
                     </div>
-                    <ChevronDown className="h-3 w-3" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuItem onClick={copyAddress} className="flex items-center gap-2">
-                    <Copy className="h-4 w-4" />
-                    Copy Address
-                  </DropdownMenuItem>
-                  
-                  <DropdownMenuSeparator />
-                  
-                  {/* X Connection Section */}
-                  <div className="px-2 py-1.5">
-                    {session?.user?.username ? (
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2 text-green-600">
-                          <Twitter className="h-4 w-4" />
-                          <span className="text-sm font-medium">X Connected</span>
-                        </div>
-                        <Button
-                          onClick={() => signOut({ callbackUrl: window.location.origin })}
-                          variant="ghost"
-                          size="sm"
-                          className="text-red-600 hover:bg-red-50 px-2 py-1 h-6 text-xs"
-                        >
-                          Disconnect
-                        </Button>
-                      </div>
-                    ) : (
-                      <ConnectXButton />
-                    )}
                   </div>
-                  
-                  <DropdownMenuSeparator />
-                  
-                  <DropdownMenuItem onClick={handleDisconnect} className="flex items-center gap-2 text-red-600">
-                    <LogOut className="h-4 w-4" />
-                    Disconnect Wallet
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+                )}
+              </div>
+
+              {/* Disconnect Button */}
+              <Button
+                onClick={handleDisconnect}
+                variant="ghost"
+                size="sm"
+                className="text-red-600 hover:bg-red-600/20 p-2 h-12 w-12"
+                title="Disconnect Wallet"
+              >
+                <LogOut className="h-5 w-5" />
+              </Button>
             </div>
           ) : (
             <WalletMultiButton className="bg-purple-600 hover:bg-purple-700 text-white px-3 py-2 h-10 !h-10 [&_button]:!py-1 [&_button]:!h-10 [&_button]:!min-h-[40px] [&_button]:!max-h-[40px] [&_button]:!leading-[40px]" />
