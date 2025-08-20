@@ -15,8 +15,31 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Pixey by VibeGame",
-  description: "",
+  title: 'Pixey by VibeGame',
+  description: 'Create pixel art on VibeGame powered by Solana',
+  icons: {
+    icon: '/image.png',
+    shortcut: '/image.png',
+    apple: '/image.png',
+  },
+  openGraph: {
+    title: 'Pixey by VibeGame',
+    description: 'Create pixel art on VibeGame powered by Solana',
+    images: [
+      {
+        url: '/og1.png',
+        width: 1200,
+        height: 630,
+        alt: 'Pixey - Pixel Art Game',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Pixey by VibeGame',
+    description: 'Create pixel art on VibeGame powered by Solana',
+    images: ['/og1.png'],
+  },
   viewport: {
     width: 'device-width',
     initialScale: 1,
