@@ -12,11 +12,12 @@ import useGameStore from '@/store/gameStore';
 import { useWalletAuth } from '@/hooks/useWalletAuth';
 import { useXConnection } from '@/hooks/useXConnection';
 import { PIXEL_COLORS } from '@/constants';
-import { Trophy } from 'lucide-react';
+import { Trophy, Coins } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Card, CardContent } from '@/components/ui/card';
 import { getTotalBurnedTokens } from '@/constants';
 import GetPixelsModal from '@/components/GetPixelsModal';
+import { Button } from '@/components/ui/button';
 
 function GameContent() {
   const { publicKey, connected } = useWallet();
@@ -163,25 +164,39 @@ function GameContent() {
           </div>
             
           {/* Place Pixel Button - Below colors on mobile, beside on desktop */}
-          <button
-            onClick={handlePlacePixel}
-            disabled={!selectedPixel}
-            className="text-white px-6 py-2 rounded-lg font-medium transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
-            style={{
-              background: 'linear-gradient(to right, #EE00FF 0%, #EE5705 66%, #EE05E7 100%)',
-              color: 'white',
-              padding: '8px 24px',
-              borderRadius: '8px',
-              fontSize: '14px',
-              fontWeight: '500',
-              boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
-              transition: 'all 0.2s',
-              border: 'none',
-              cursor: 'pointer',
-            }}
-          >
-            Place Pixel
-          </button>
+          <div className="flex items-center space-x-4">
+            {/* Buy Pixels Button - Mobile only */}
+            {publicKey && isAuthenticated && (
+              <Button
+                onClick={() => setShowGetPixels(true)}
+                className="md:hidden border border-yellow-500/30 text-white hover:bg-yellow-500/30 text-sm px-6 py-2 h-auto flex items-center"
+                style={{ backgroundColor: '#FFAE0033' }}
+              >
+                <Coins className="h-3 w-3 mr-1 text-white" />
+                Buy Pixels
+              </Button>
+            )}
+
+            <button
+              onClick={handlePlacePixel}
+              disabled={!selectedPixel}
+              className="text-white px-6 py-2 rounded-lg font-medium transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+              style={{
+                background: 'linear-gradient(to right, #EE00FF 0%, #EE5705 66%, #EE05E7 100%)',
+                color: 'white',
+                padding: '8px 24px',
+                borderRadius: '8px',
+                fontSize: '14px',
+                fontWeight: '500',
+                boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+                transition: 'all 0.2s',
+                border: 'none',
+                cursor: 'pointer',
+              }}
+            >
+              Place Pixel
+            </button>
+          </div>
         </div>
       </div>
       
