@@ -43,10 +43,24 @@ export const PIXEL_BOARD_STAGES = {
   STAGE_3: { size: 1000, required_burns: 100000 },
 } as const;
 
-// Colors for pixel board
+// Colors for pixel board - Complete Reddit r/place official palette
 export const PIXEL_COLORS = [
-  '#FF0000', '#00FF00', '#0000FF', '#FFFF00', '#FF00FF', '#00FFFF',
-  '#FFFFFF', '#000000', '#808080', '#800000', '#008000', '#000080',
-  '#808000', '#800080', '#008080', '#C0C0C0', '#FFA500', '#FFC0CB',
-  '#A52A2A', '#90EE90', '#87CEEB', '#DDA0DD', '#F0E68C',
+  '#FF0000', // Red
+  '#FFA500', // Orange
+  '#FFFF00', // Yellow
+  '#00FF00', // Lime
+  '#00FA9A', // Medium Spring Green
+  '#00FFFF', // Cyan
+  '#87CEEB', // Sky Blue
+  '#0000FF', // Blue
+  '#8A2BE2', // Blue Violet
+  '#FF00FF', // Magenta
+  '#FF69B4', // Hot Pink
+  '#800080', // Purple
+  '#008000', // Dark Green
+  '#008080', // Teal
+  '#A52A2A', // Brown
+  '#C0C0C0', // Silver
+  '#FFFFFF', // White
+  '#000000', // Black
 ] as const;

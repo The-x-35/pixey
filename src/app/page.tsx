@@ -29,6 +29,7 @@ function GameContent() {
   const [showTopPlayers, setShowTopPlayers] = useState(false);
   const [topPlayers, setTopPlayers] = useState<Array<{wallet_address: string, total_pixels_placed: number, free_pixels: number, total_tokens_burned: string, username?: string, profile_picture?: string}>>([]);
   const [showGetPixels, setShowGetPixels] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
   // Handle X connection and profile updates
   useXConnection();
@@ -104,7 +105,7 @@ function GameContent() {
       <ToastContainer />
       
       {/* Navbar */}
-      <Navbar isAuthenticated={isAuthenticated} />
+      <Navbar isAuthenticated={isAuthenticated} onMobileMenuChange={setIsMobileMenuOpen} />
       
       {/* Main Game Layout */}
       <div className={`flex h-[calc(100vh-120px)] ${isCommentsVisible ? '' : 'justify-center'}`}>
@@ -127,16 +128,31 @@ function GameContent() {
       
       {/* Permanent Color Palette at Bottom */}
       <div className="fixed bottom-0 left-0 right-0 bg-transparent backdrop-blur-md border-t border-[#262626] p-4 z-40">
-        <div className="flex items-center justify-center space-x-8">
-          {/* Color Palette */}
-          <div className="flex items-center space-x-3">
-            <span className="text-white font-medium text-sm mr-2">Colors:</span>
-            <div className="flex space-x-2">
-              {PIXEL_COLORS.map((color) => (
+        <div className="flex flex-col md:flex-row items-center justify-center space-y-4 md:space-y-0 md:space-x-8">
+          {/* Color Palette - 2 rows on mobile, 1 row on desktop */}
+          <div className="flex flex-col items-center space-y-2 md:flex-row md:space-y-0 md:space-x-2">
+            {/* First row of colors */}
+            <div className="flex gap-1 md:gap-2">
+              {PIXEL_COLORS.slice(0, Math.ceil(PIXEL_COLORS.length / 2)).map((color) => (
                 <button
                   key={color}
                   onClick={() => setSelectedColor(color)}
-                  className={`w-10 h-10 rounded-lg border-2 transition-all duration-200 hover:scale-110 ${
+                  className={`w-9 h-9 md:w-10 md:h-10 rounded-lg border-2 transition-all duration-200 hover:scale-110 ${
+                    selectedColor === color ? 'border-white shadow-lg' : 'border-[#262626]'
+                  }`}
+                  style={{ backgroundColor: color }}
+                  title={`Select ${color}`}
+                />
+              ))}
+            </div>
+            
+            {/* Second row of colors */}
+            <div className="flex gap-1 md:gap-2">
+              {PIXEL_COLORS.slice(Math.ceil(PIXEL_COLORS.length / 2)).map((color) => (
+                <button
+                  key={color}
+                  onClick={() => setSelectedColor(color)}
+                  className={`w-9 h-9 md:w-10 md:h-10 rounded-lg border-2 transition-all duration-200 hover:scale-110 ${
                     selectedColor === color ? 'border-white shadow-lg' : 'border-[#262626]'
                   }`}
                   style={{ backgroundColor: color }}
@@ -146,7 +162,7 @@ function GameContent() {
             </div>
           </div>
             
-          {/* Place Pixel Button */}
+          {/* Place Pixel Button - Below colors on mobile, beside on desktop */}
           <button
             onClick={handlePlacePixel}
             disabled={!selectedPixel}
@@ -169,11 +185,11 @@ function GameContent() {
         </div>
       </div>
       
-      {/* Floating Chat Button - Only show when comments are closed */}
-      {!isCommentsVisible && (
+      {/* Floating Chat Button - Only show when comments are closed and mobile menu is closed */}
+      {!isCommentsVisible && !isMobileMenuOpen && (
         <button
           onClick={() => setIsCommentsVisible(true)}
-          className="fixed top-20 right-4 z-50 text-white p-3 rounded-full shadow-lg transition-all duration-200 hover:scale-110"
+          className="fixed top-28 right-4 z-50 text-white p-3 rounded-full shadow-lg transition-all duration-200 hover:scale-110"
           style={{
             background: 'linear-gradient(to right, #EE00FF 0%, #EE5705 66%, #EE05E7 100%)',
             color: 'white',
@@ -192,11 +208,11 @@ function GameContent() {
         </button>
       )}
 
-      {/* Floating Leaderboard Button - Only show when comments are closed */}
-      {!isCommentsVisible && (
+      {/* Floating Leaderboard Button - Only show when comments are closed and mobile menu is closed */}
+      {!isCommentsVisible && !isMobileMenuOpen && (
         <button
           onClick={openStats}
-          className="fixed top-36 right-4 z-50 text-white p-3 rounded-full shadow-lg transition-all duration-200 hover:scale-110"
+          className="fixed top-44 right-4 z-50 text-white p-3 rounded-full shadow-lg transition-all duration-200 hover:scale-110"
           style={{
             background: 'linear-gradient(to right, #EE00FF 0%, #EE5705 66%, #EE05E7 100%)',
             color: 'white',

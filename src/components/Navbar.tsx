@@ -18,7 +18,9 @@ import {
   LogOut, 
   ChevronDown,
   User,
-  Twitter
+  Twitter,
+  Menu,
+  X
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -32,9 +34,10 @@ import { useSession, signOut } from 'next-auth/react';
 interface NavbarProps {
   className?: string;
   isAuthenticated?: boolean;
+  onMobileMenuChange?: (isOpen: boolean) => void;
 }
 
-export default function Navbar({ className, isAuthenticated }: NavbarProps) {
+export default function Navbar({ className, isAuthenticated, onMobileMenuChange }: NavbarProps) {
   const { publicKey, disconnect } = useWallet();
   const { user, pixelBoard, addToast } = useGameStore();
   const { data: session } = useSession();
@@ -47,7 +50,13 @@ export default function Navbar({ className, isAuthenticated }: NavbarProps) {
   const [isShaking, setIsShaking] = useState(false);
   const [showGetPixels, setShowGetPixels] = useState(false);
   const [isAccountOpen, setIsAccountOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
+  // Notify parent component when mobile menu state changes
+  useEffect(() => {
+    onMobileMenuChange?.(isMobileMenuOpen);
+  }, [isMobileMenuOpen, onMobileMenuChange]);
+
   // Fetch total burned tokens on component mount
   useEffect(() => {
     const fetchBurnedTokens = async () => {
@@ -407,13 +416,35 @@ export default function Navbar({ className, isAuthenticated }: NavbarProps) {
       )}>
         {/* Left side - Logo and Notification */}
         <div className="flex items-center space-x-4">
-          <img src="/logo.svg" alt="Pixey Logo" className="h-16 w-auto" />
+          <div className="flex flex-col space-y-2">
+            <img src="/logo.svg" alt="Pixey Logo" className="h-16 w-auto" />
+            
+            {/* Mobile Notification - Below logo */}
+            {currentNotification && (
+              <div className={`md:hidden rounded-lg px-3 py-2 border backdrop-blur-md ${
+                currentNotificationColor === 'green' ? 'bg-green-400/20 border-green-400/40 shadow-lg shadow-green-400/20' :
+                currentNotificationColor === 'yellow' ? 'bg-yellow-400/20 border-yellow-400/40 shadow-lg shadow-yellow-400/20' :
+                currentNotificationColor === 'red' ? 'bg-red-400/20 border-red-400/40 shadow-lg shadow-red-400/20' :
+                currentNotificationColor === 'blue' ? 'bg-blue-400/20 border-blue-400/40 shadow-lg shadow-blue-400/20' :
+                currentNotificationColor === 'purple' ? 'bg-purple-400/20 border-purple-400/40 shadow-lg shadow-purple-400/20' :
+                currentNotificationColor === 'pink' ? 'bg-pink-400/20 border-pink-400/40 shadow-lg shadow-pink-400/20' :
+                currentNotificationColor === 'orange' ? 'bg-orange-400/20 border-orange-400/40 shadow-lg shadow-orange-400/20' :
+                'bg-cyan-400/20 border-cyan-400/40 shadow-lg shadow-cyan-400/20'
+              } ${
+                isShaking ? 'animate-shake' : ''
+              }`}>
+                <div className="text-sm font-medium text-white drop-shadow-sm">
+                  {currentNotification}
+                </div>
+              </div>
+            )}
+          </div>
           
-          {/* Pixel Placement Notification */}
+          {/* Pixel Placement Notification - Hidden on mobile */}
           {currentNotification && (
-            <div className={`rounded-lg px-3 py-2 border backdrop-blur-md h-12 flex items-center ${
+            <div className={`hidden md:block rounded-lg px-3 py-2 border backdrop-blur-md h-12 flex items-center ${
               currentNotificationColor === 'green' ? 'bg-green-400/20 border-green-400/40 shadow-lg shadow-green-400/20' :
-              currentNotificationColor === 'yellow' ? 'bg-yellow-400/20 border-yellow-400/40 shadow-lg shadow-yellow-400/20' :
+              currentNotificationColor === 'yellow' ? 'bg-yellow-400/20 border-yellow-400/40 shadow-lg shadow-green-400/20' :
               currentNotificationColor === 'red' ? 'bg-red-400/20 border-red-400/40 shadow-lg shadow-red-400/20' :
               currentNotificationColor === 'blue' ? 'bg-blue-400/20 border-blue-400/40 shadow-lg shadow-blue-400/20' :
               currentNotificationColor === 'purple' ? 'bg-purple-400/20 border-purple-400/40 shadow-lg shadow-purple-400/20' :
@@ -430,8 +461,8 @@ export default function Navbar({ className, isAuthenticated }: NavbarProps) {
           )}
         </div>
 
-        {/* Middle - Pixels and Burned Stats */}
-        <div className="flex items-center space-x-2">
+        {/* Middle - Pixels and Burned Stats - Hidden on mobile */}
+        <div className="hidden md:flex items-center space-x-2">
           {/* Total Burned Stats */}
           <div className="flex items-center space-x-2 bg-white/10 rounded-lg px-2 py-2 border border-white/20 h-12">
             <div className="text-center">
@@ -458,164 +489,310 @@ export default function Navbar({ className, isAuthenticated }: NavbarProps) {
 
         {/* Right side - Leaderboard and Account */}
         <div className="flex items-center space-x-2">
-          {/* Wallet Section */}
-          {publicKey && isAuthenticated ? (
-            <div className="flex items-center space-x-1">
-              {/* Get Pixels Button */}
-              <Button
-                onClick={() => setShowGetPixels(true)}
-                variant="outline"
-                size="sm"
-                className="border-yellow-500/30 text-white hover:bg-yellow-500/30 text-sm px-2 py-2 h-12"
-                style={{ backgroundColor: '#FFAE0033' }}
-              >
-                <Coins className="h-3 w-3 mr-1 text-white" />
-                Buy Pixels
-              </Button>
-
-              {/* Account Dropdown */}
-              <div className="relative">
+          {/* Wallet Section - Hidden on mobile */}
+          <div className="hidden md:flex items-center space-x-1">
+            {publicKey && isAuthenticated ? (
+              <div className="flex items-center space-x-1">
+                {/* Get Pixels Button */}
                 <Button
-                  data-account-button
-                  onClick={() => {
-                    console.log('Account button clicked, current state:', isAccountOpen);
-                    setIsAccountOpen(prev => {
-                      const newState = !prev;
-                      console.log('Setting isAccountOpen to:', newState);
-                      return newState;
-                    });
-                  }}
+                  onClick={() => setShowGetPixels(true)}
                   variant="outline"
                   size="sm"
-                  className="border-white/20 text-white hover:bg-white/20 text-sm px-2 py-2 h-12 flex items-center gap-2"
-                  style={{ backgroundColor: '#3405EE66' }}
+                  className="border-yellow-500/30 text-white hover:bg-yellow-500/30 text-sm px-2 py-2 h-12"
+                  style={{ backgroundColor: '#FFAE0033' }}
                 >
-                  <img
-                    src={getAvatarUrl()}
-                    alt="Avatar"
-                    className="h-7 w-7 rounded-full"
-                  />
-                  <div className="text-left">
-                    <div className="text-base font-medium text-white">
-                      {user?.username && user.username !== user?.wallet_address ? user.username : publicKey.toString().slice(0, 4) + '...' + publicKey.toString().slice(-4)}
-                    </div>
-                    <div className="text-base text-gray-300">
-                      {user?.total_pixels_placed || 0} placed • {user?.free_pixels || 0} left
-                    </div>
-                  </div>
-                  <ChevronDown className="h-3 w-3" />
+                  <Coins className="h-3 w-3 mr-1 text-white" />
+                  Buy Pixels
                 </Button>
-                
-                {/* Custom Dropdown Content */}
-                {isAccountOpen && (
-                  <div 
-                    data-account-dropdown
-                    className="absolute right-0 top-full mt-2 w-72 rounded-md shadow-lg border border-gray-700 z-[999999]" 
-                    style={{ backgroundColor: '#1F1F1F' }}
-                  >
-                    <div className="py-3">
-                      {/* X Connection Section - Only show when NOT connected */}
-                      {(!user?.username || user?.username === user?.wallet_address) && (
-                        <div className="py-1.5 mb-3 flex justify-center">
-                          <ConnectXButton />
-                        </div>
-                      )}
 
-                      {/* Profile Card */}
-                      <div className="px-3 mb-3">
-                        <div className="relative w-full h-64 rounded-lg overflow-hidden">
-                          {/* Card Background */}
-                          <div 
-                            className="absolute inset-0 bg-cover bg-center bg-no-repeat rounded-lg"
-                            style={{ 
-                              backgroundImage: 'url(/card.svg)',
-                              backgroundSize: '100% 100%',
-                              width: '100%',
-                              height: '100%'
-                            }}
-                          />
-                          
-                          {/* Profile Content Overlay - Positioned on top */}
-                          <div className="absolute top-0 left-0 right-0 h-48 flex flex-col items-center text-white p-4 pt-3">
-                            {/* Profile Picture */}
-                            <img
-                              src={getAvatarUrl()}
-                              alt="Profile"
-                              className="h-16 w-16 rounded-lg border-2 border-white/30 mb-3"
+                {/* Account Dropdown */}
+                <div className="relative">
+                  <Button
+                    data-account-button
+                    onClick={() => {
+                      console.log('Account button clicked, current state:', isAccountOpen);
+                      setIsAccountOpen(prev => {
+                        const newState = !prev;
+                        console.log('Setting isAccountOpen to:', newState);
+                        return newState;
+                      });
+                    }}
+                    variant="outline"
+                    size="sm"
+                    className="border-white/20 text-white hover:bg-white/20 text-sm px-2 py-2 h-12 flex items-center gap-2"
+                    style={{ backgroundColor: '#3405EE66' }}
+                  >
+                    <img
+                      src={getAvatarUrl()}
+                      alt="Avatar"
+                      className="h-7 w-7 rounded-full"
+                    />
+                    <div className="text-left">
+                      <div className="text-base font-medium text-white">
+                        {user?.username && user.username !== user?.wallet_address ? user.username : publicKey.toString().slice(0, 4) + '...' + publicKey.toString().slice(-4)}
+                      </div>
+                      <div className="text-base text-gray-300">
+                        {user?.total_pixels_placed || 0} placed • {user?.free_pixels || 0} left
+                      </div>
+                    </div>
+                    <ChevronDown className="h-3 w-3" />
+                  </Button>
+                  
+                  {/* Custom Dropdown Content */}
+                  {isAccountOpen && (
+                    <div 
+                      data-account-dropdown
+                      className="absolute right-0 top-full mt-2 w-72 rounded-md shadow-lg border border-gray-700 z-[999999]" 
+                      style={{ backgroundColor: '#1F1F1F' }}
+                    >
+                      <div className="py-3">
+                        {/* X Connection Section - Only show when NOT connected */}
+                        {(!user?.username || user?.username === user?.wallet_address) && (
+                          <div className="py-1.5 mb-3 flex justify-center">
+                            <ConnectXButton />
+                          </div>
+                        )}
+
+                        {/* Profile Card */}
+                        <div className="px-3 mb-3">
+                          <div className="relative w-full h-64 rounded-lg overflow-hidden">
+                            {/* Card Background */}
+                            <div 
+                              className="absolute inset-0 bg-cover bg-center bg-no-repeat rounded-lg"
+                              style={{ 
+                                backgroundImage: 'url(/card.svg)',
+                                backgroundSize: '100% 100%',
+                                width: '100%',
+                                height: '100%'
+                              }}
                             />
                             
-                            {/* Username/Wallet */}
-                            <div className="text-center mb-4">
-                              <div className="text-xl mb-1">
-                                {user?.username && user.username !== user?.wallet_address ? `@${user.username}` : publicKey.toString().slice(0, 4) + '...' + publicKey.toString().slice(-4)}
-                              </div>
-                            </div>
-                            
-                            {/* Stats Row */}
-                            <div className="flex justify-between w-full max-w-56">
-                              {/* Pixels Placed */}
-                              <div className="text-center">
-                                <div className="text-3xl font-bold bg-gradient-to-r from-[#EE00FF] to-[#EE5705] bg-clip-text text-transparent">
-                                  {user?.total_pixels_placed || 0}
-                                </div>
-                                <div className="text-sm text-gray-200">
-                                  Pixels Placed
+                            {/* Profile Content Overlay - Positioned on top */}
+                            <div className="absolute top-0 left-0 right-0 h-48 flex flex-col items-center text-white p-4 pt-3">
+                              {/* Profile Picture */}
+                              <img
+                                src={getAvatarUrl()}
+                                alt="Profile"
+                                className="h-16 w-16 rounded-lg border-2 border-white/30 mb-3"
+                              />
+                              
+                              {/* Username/Wallet */}
+                              <div className="text-center mb-4">
+                                <div className="text-xl mb-1">
+                                  {user?.username && user.username !== user?.wallet_address ? `@${user.username}` : publicKey.toString().slice(0, 4) + '...' + publicKey.toString().slice(-4)}
                                 </div>
                               </div>
                               
-                              {/* VIBEY Burned */}
-                              <div className="text-center">
-                                <div className="text-3xl font-bold bg-gradient-to-r from-[#FFA371] to-[#EE5705] bg-clip-text text-transparent">
-                                  {Math.floor(Number(user?.total_tokens_burned) || 0)}
+                              {/* Stats Row */}
+                              <div className="flex justify-between w-full max-w-56">
+                                {/* Pixels Placed */}
+                                <div className="text-center">
+                                  <div className="text-3xl font-bold bg-gradient-to-r from-[#EE00FF] to-[#EE5705] bg-clip-text text-transparent">
+                                    {user?.total_pixels_placed || 0}
+                                  </div>
+                                  <div className="text-sm text-gray-200">
+                                    Pixels Placed
+                                  </div>
                                 </div>
-                                <div className="text-sm text-gray-200">
-                                  $VIBEY Burned
+                                
+                                {/* VIBEY Burned */}
+                                <div className="text-center">
+                                  <div className="text-3xl font-bold bg-gradient-to-r from-[#FFA371] to-[#EE5705] bg-clip-text text-transparent">
+                                    {Math.floor(Number(user?.total_tokens_burned) || 0)}
+                                  </div>
+                                  <div className="text-sm text-gray-200">
+                                    $VIBEY Burned
+                                  </div>
                                 </div>
                               </div>
                             </div>
                           </div>
                         </div>
-                      </div>
 
-                      {/* Share on X Button */}
-                      <div className="px-3">
-                        <Button
-                          onClick={() => shareProfileCard()}
-                          variant="ghost"
-                          size="sm"
-                          className="w-full justify-center text-sm px-2 py-1.5 h-8 rounded-full"
-                          style={{
-                            background: 'linear-gradient(to right, #EE2B7E, #EE5705)',
-                            color: 'white'
-                          }}
-                        >
-                          Share on
-                          <svg className="h-4 w-4 ml-2" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
-                          </svg>
-                        </Button>
+                        {/* Share on X Button */}
+                        <div className="px-3">
+                          <Button
+                            onClick={() => shareProfileCard()}
+                            variant="ghost"
+                            size="sm"
+                            className="w-full justify-center text-sm px-2 py-1.5 h-8 rounded-full"
+                            style={{
+                              background: 'linear-gradient(to right, #EE2B7E, #EE5705)',
+                              color: 'white'
+                            }}
+                          >
+                            Share on
+                            <svg className="h-4 w-4 ml-2" viewBox="0 0 24 24" fill="currentColor">
+                              <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                            </svg>
+                          </Button>
+                        </div>
                       </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Disconnect Button */}
+                <Button
+                  onClick={handleDisconnect}
+                  variant="ghost"
+                  size="sm"
+                  className="text-red-600 hover:bg-red-600/20 p-2 h-12 w-12"
+                  title="Disconnect Wallet"
+                >
+                  <LogOut className="h-5 w-5" />
+                </Button>
+              </div>
+            ) : (
+              <WalletMultiButton className="bg-purple-600 hover:bg-purple-700 text-white px-3 py-2 h-10 !h-10 [&_button]:!py-1 [&_button]:!h-10 [&_button]:!min-h-[40px] [&_button]:!max-h-[40px] [&_button]:!leading-[40px]" />
+            )}
+          </div>
+
+          {/* Mobile Hamburger Menu Button */}
+          <Button
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            variant="ghost"
+            size="sm"
+            className="md:hidden text-white p-2 h-12 w-12"
+          >
+            {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+          </Button>
+        </div>
+      </nav>
+
+      {/* Mobile Menu Overlay */}
+        {isMobileMenuOpen && (
+          <div className="md:hidden fixed inset-0 z-50 bg-black/40">
+            <div className="absolute top-0 right-0 w-80 h-full bg-black/20 backdrop-blur-xl border-l border-white/20 p-6 overflow-y-auto">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-xl font-bold text-white">Menu</h2>
+                <Button
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  variant="ghost"
+                  size="sm"
+                  className="text-white p-2"
+                >
+                  <X className="h-5 w-5" />
+                </Button>
+              </div>
+
+              {/* Mobile Stats */}
+              <div className="space-y-4 mb-6">
+                {/* Total Burned Stats */}
+                <div className="bg-white/10 rounded-lg px-4 py-3 border border-white/20">
+                  <div className="text-center">
+                    <div className="text-sm text-white">
+                      🔥 <span className="bg-gradient-to-r from-[#FFA371] to-[#EE5705] bg-clip-text text-transparent font-bold">
+                        {formatLargeNumber(totalBurnedTokens)}
+                      </span> $VIBEY Burned
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Pixels Placed Stats */}
+                <div className="bg-white/10 rounded-lg px-4 py-3 border border-white/20">
+                  <div className="text-center">
+                    <div className="text-sm text-white">
+                      <span className="text-gray-300">Pixels Placed: </span>
+                      <span className="font-bold">
+                        {pixelBoard.pixels ? Object.keys(pixelBoard.pixels).length : 0}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Mobile Menu Items */}
+              <div className="space-y-4">
+                {/* Get Pixels Button */}
+                {publicKey && isAuthenticated && (
+                  <Button
+                    onClick={() => {
+                      setShowGetPixels(true);
+                      setIsMobileMenuOpen(false);
+                    }}
+                    variant="outline"
+                    size="sm"
+                    className="w-full border-yellow-500/30 text-white hover:bg-yellow-500/30 text-sm py-3 h-12"
+                    style={{ backgroundColor: '#FFAE0033' }}
+                  >
+                    <Coins className="h-4 w-4 mr-2 text-white" />
+                    Buy Pixels
+                  </Button>
+                )}
+
+                {/* Wallet Connection */}
+                {!publicKey ? (
+                  <div className="pt-4">
+                    <WalletMultiButton className="w-full bg-purple-600 hover:bg-purple-700 text-white px-3 py-3 h-12 !h-12 [&_button]:!py-3 [&_button]:!h-12 [&_button]:!min-h-[48px] [&_button]:!max-h-[48px] [&_button]:!leading-[48px]" />
+                  </div>
+                ) : (
+                  <div className="space-y-4 pt-4">
+                    {/* User Profile Section */}
+                    <div className="bg-white/5 rounded-lg p-4 border border-white/10">
+                      <div className="flex items-center space-x-3 mb-3">
+                        <img
+                          src={getAvatarUrl()}
+                          alt="Avatar"
+                          className="h-12 w-12 rounded-full"
+                        />
+                        <div>
+                          <div className="text-base font-medium text-white">
+                            {user?.username && user.username !== user?.wallet_address ? user.username : publicKey.toString().slice(0, 4) + '...' + publicKey.toString().slice(-4)}
+                          </div>
+                          <div className="text-sm text-gray-300">
+                            {user?.total_pixels_placed || 0} placed • {user?.free_pixels || 0} left
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {/* X Connection - Only show when NOT connected */}
+                      {(!user?.username || user?.username === user?.wallet_address) && (
+                        <div className="mb-3">
+                          <ConnectXButton />
+                        </div>
+                      )}
+
+                      {/* Share Profile Button */}
+                      <Button
+                        onClick={() => {
+                          shareProfileCard();
+                          setIsMobileMenuOpen(false);
+                        }}
+                        variant="ghost"
+                        size="sm"
+                        className="w-full justify-center text-sm py-2 h-10 rounded-full mb-3"
+                        style={{
+                          background: 'linear-gradient(to right, #EE2B7E, #EE5705)',
+                          color: 'white'
+                        }}
+                      >
+                        Share Profile on
+                        <svg className="h-4 w-4 ml-2" viewBox="0 0 24 24" fill="currentColor">
+                          <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                        </svg>
+                      </Button>
+
+                      {/* Disconnect Button */}
+                      <Button
+                        onClick={() => {
+                          handleDisconnect();
+                          setIsMobileMenuOpen(false);
+                        }}
+                        variant="ghost"
+                        size="sm"
+                        className="w-full text-red-600 hover:bg-red-600/20 py-2 h-10"
+                      >
+                        <LogOut className="h-4 w-4 mr-2" />
+                        Disconnect Wallet
+                      </Button>
                     </div>
                   </div>
                 )}
               </div>
-
-              {/* Disconnect Button */}
-              <Button
-                onClick={handleDisconnect}
-                variant="ghost"
-                size="sm"
-                className="text-red-600 hover:bg-red-600/20 p-2 h-12 w-12"
-                title="Disconnect Wallet"
-              >
-                <LogOut className="h-5 w-5" />
-              </Button>
             </div>
-          ) : (
-            <WalletMultiButton className="bg-purple-600 hover:bg-purple-700 text-white px-3 py-2 h-10 !h-10 [&_button]:!py-1 [&_button]:!h-10 [&_button]:!min-h-[40px] [&_button]:!max-h-[40px] [&_button]:!leading-[40px]" />
-          )}
-        </div>
-      </nav>
+          </div>
+        )}
 
                 {/* Top Players Dialog */}
       <Dialog open={showTopPlayers} onOpenChange={setShowTopPlayers}>
