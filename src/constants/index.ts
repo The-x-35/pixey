@@ -4,6 +4,23 @@ export const VIBEY_TOKEN_MINT_ADDRESS = "3nf8LgahHm57gEUx64cDNJf4h53C2MwqZCK6LGD
 
 export const VIBEY_TOTAL_SUPPLY = 1_000_000_000; // 1 billion tokens
 
+// Jupiter Ultra API URL
+export const JUP_ULTRA_API = "https://lite-api.jup.ag/ultra/v1";
+
+// Jupiter referral configuration
+export const JUP_REFERRAL_ADDRESS = "JBbc8MBy1KiVAbqbk1BPKdXxV6jRT4PWUgKnMb1KXFc1";
+export const JUP_REFERRAL_FEE = 100; // 1% in basis points
+
+// API Endpoints
+export const API_ENDPOINTS = {
+    SOLANA_RPC_ENDPOINT: SOLANA_RPC_ENDPOINT,
+} as const;
+
+// Common token addresses
+export const TOKENS = {
+    SOL: "So11111111111111111111111111111111111111112",
+} as const;
+
 // Game Configuration
 export const FREE_PIXELS_PER_USER = 10; // Free pixels given to new users
 export const VIBEY_TO_PIXELS_RATE = 1; // 1 VIBEY = 1 pixel
