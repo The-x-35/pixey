@@ -36,7 +36,7 @@ interface NavbarProps {
 
 export default function Navbar({ className, isAuthenticated }: NavbarProps) {
   const { publicKey, disconnect } = useWallet();
-  const { user, pixelBoard } = useGameStore();
+  const { user, pixelBoard, addToast } = useGameStore();
   const { data: session } = useSession();
   const [showTopPlayers, setShowTopPlayers] = useState(false);
   const [topPlayers, setTopPlayers] = useState<Array<{wallet_address: string, total_pixels_placed: number, free_pixels: number, total_tokens_burned: string, username?: string, profile_picture?: string}>>([]);
@@ -65,6 +65,44 @@ export default function Navbar({ className, isAuthenticated }: NavbarProps) {
     const interval = setInterval(fetchBurnedTokens, 30000);
     return () => clearInterval(interval);
   }, []);
+
+  // Debug: Log when user data changes
+  useEffect(() => {
+    console.log('Navbar - User data changed:', user);
+    console.log('Navbar - Username changed:', user?.username);
+  }, [user]);
+
+  // Fetch user data when wallet connects
+  useEffect(() => {
+    if (publicKey && !user) {
+      const fetchUserData = async () => {
+        try {
+          const response = await fetch(`/api/users?wallet=${publicKey.toString()}`);
+          if (response.ok) {
+            const result = await response.json();
+            if (result.success && result.data.length > 0) {
+              const userData = result.data[0];
+              console.log('Navbar - Fetched user data:', userData);
+              // Update the store with user data
+              useGameStore.getState().setUser(userData);
+            }
+          }
+        } catch (error) {
+          console.error('Error fetching user data:', error);
+        }
+      };
+      
+      fetchUserData();
+    }
+  }, [publicKey, user]);
+
+  // Auto-disconnect X if session exists but username not in database
+  useEffect(() => {
+    if (session?.user?.username && user && (!user.username || user.username === user.wallet_address)) {
+      console.log('Navbar - Auto-disconnecting X: session exists but username not in database');
+      signOut({ callbackUrl: window.location.origin });
+    }
+  }, [session, user, signOut]);
 
   // Fetch latest pixel placement notification
   useEffect(() => {
@@ -102,8 +140,20 @@ export default function Navbar({ className, isAuthenticated }: NavbarProps) {
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (isAccountOpen && !event.target) {
-        setIsAccountOpen(false);
+      if (isAccountOpen) {
+        const target = event.target as Element;
+        const accountDropdown = document.querySelector('[data-account-dropdown]');
+        const accountButton = document.querySelector('[data-account-button]');
+        
+        // Don't close if clicking on the account button itself
+        if (accountButton && accountButton.contains(target)) {
+          return;
+        }
+        
+        // Close if clicking outside both the button and dropdown
+        if (accountDropdown && !accountDropdown.contains(target)) {
+          setIsAccountOpen(false);
+        }
       }
     };
     
@@ -140,6 +190,169 @@ export default function Navbar({ className, isAuthenticated }: NavbarProps) {
     if (publicKey) {
       navigator.clipboard.writeText(publicKey.toString());
     }
+  };
+
+  // Debug: Log user data
+  console.log('Navbar - User data:', user);
+  console.log('Navbar - Username:', user?.username);
+  console.log('Navbar - Session:', session);
+
+  const shareProfileCard = async () => {
+    if (!publicKey) return;
+    
+    try {
+      // Create a canvas element to generate the profile card image
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+
+      // Set canvas size
+      canvas.width = 400;
+      canvas.height = 300;
+
+      // Load the card background image
+      const cardImg = new Image();
+      cardImg.crossOrigin = 'anonymous';
+      
+      cardImg.onload = () => {
+        // Draw the background
+        ctx.drawImage(cardImg, 0, 0, 400, 300);
+        
+        // Draw profile picture
+        const profileImg = new Image();
+        profileImg.crossOrigin = 'anonymous';
+        profileImg.onload = () => {
+          // Create circular profile picture
+          ctx.save();
+          ctx.beginPath();
+          ctx.arc(200, 80, 32, 0, 2 * Math.PI);
+          ctx.clip();
+          ctx.drawImage(profileImg, 168, 48, 64, 64);
+          ctx.restore();
+          
+          // Draw username/wallet
+          ctx.fillStyle = 'white';
+          ctx.font = 'bold 20px Arial';
+          ctx.textAlign = 'center';
+          ctx.fillText(
+            user?.username && user.username !== user?.wallet_address 
+              ? user.username 
+              : publicKey.toString().slice(0, 4) + '...' + publicKey.toString().slice(-4),
+            200, 140
+          );
+          
+          // Draw stats
+          ctx.font = 'bold 24px Arial';
+          ctx.fillStyle = '#FCD34D'; // Yellow for pixels
+          ctx.textAlign = 'center';
+          ctx.fillText((user?.total_pixels_placed || 0).toString(), 120, 200);
+          ctx.fillText((user?.total_tokens_burned || 0).toString(), 280, 200);
+          
+          ctx.font = '12px Arial';
+          ctx.fillStyle = '#E5E7EB';
+          ctx.fillText('pixels placed', 120, 220);
+          ctx.fillText('$VIBEY burned', 280, 220);
+          
+          // Convert canvas to blob and share to X
+          canvas.toBlob((blob) => {
+            if (blob) {
+              // Share to X using proper X sharing method
+              shareToX(blob);
+            }
+          }, 'image/png');
+        };
+        profileImg.src = getAvatarUrl();
+      };
+      
+      cardImg.src = '/card.svg';
+    } catch (error) {
+      console.error('Error sharing profile card:', error);
+    }
+  };
+
+  const shareToX = async (blob: Blob) => {
+    try {
+      // Step 1: Copy image to clipboard
+      await copyImageToClipboard(blob);
+      
+      // Step 2: Show success toast
+      addToast({
+        message: 'Image copied to clipboard! Opening X...',
+        type: 'success',
+        duration: 3000,
+      });
+      
+      // Step 3: Wait a moment for user to see the toast, then open X
+      setTimeout(() => {
+        const text = encodeURIComponent('Checkout my progress on pixey.vibegame.fun');
+        const xUrl = `https://twitter.com/intent/tweet?text=${text}`;
+        window.open(xUrl, '_blank', 'width=600,height=400');
+      }, 1500);
+      
+    } catch (error) {
+      console.error('Error copying image to clipboard:', error);
+      addToast({
+        message: 'Failed to copy image. Opening X anyway...',
+        type: 'error',
+        duration: 3000,
+      });
+      
+      // Fallback: open X without clipboard copy
+      const text = encodeURIComponent('Checkout my progress on pixey.vibegame.fun');
+      const xUrl = `https://twitter.com/intent/tweet?text=${text}`;
+      window.open(xUrl, '_blank', 'width=600,height=400');
+    }
+  };
+
+  const copyImageToClipboard = async (blob: Blob): Promise<void> => {
+    try {
+      // Convert blob to clipboard item
+      const clipboardItem = new ClipboardItem({
+        'image/png': blob
+      });
+      
+      await navigator.clipboard.write([clipboardItem]);
+    } catch (error) {
+      console.error('Clipboard API failed, trying fallback method:', error);
+      
+      // Fallback: convert blob to canvas and use canvas.toBlob
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      if (!ctx) throw new Error('Could not get canvas context');
+      
+      const img = new Image();
+      img.onload = () => {
+        canvas.width = img.width;
+        canvas.height = img.height;
+        ctx.drawImage(img, 0, 0);
+        
+        canvas.toBlob(async (blob) => {
+          if (blob) {
+            try {
+              const clipboardItem = new ClipboardItem({
+                'image/png': blob
+              });
+              await navigator.clipboard.write([clipboardItem]);
+            } catch (fallbackError) {
+              throw new Error('All clipboard methods failed');
+            }
+          }
+        }, 'image/png');
+      };
+      
+      img.src = URL.createObjectURL(blob);
+    }
+  };
+
+  const downloadImage = (blob: Blob) => {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'pixey-profile-card.png';
+    document.body.appendChild(a); // Required for Firefox.
+    a.click();
+    document.body.removeChild(a); // Clean up.
+    URL.revokeObjectURL(url);
   };
 
   const formatLargeNumber = (num: number): string => {
@@ -263,7 +476,15 @@ export default function Navbar({ className, isAuthenticated }: NavbarProps) {
               {/* Account Dropdown */}
               <div className="relative">
                 <Button
-                  onClick={() => setIsAccountOpen(!isAccountOpen)}
+                  data-account-button
+                  onClick={() => {
+                    console.log('Account button clicked, current state:', isAccountOpen);
+                    setIsAccountOpen(prev => {
+                      const newState = !prev;
+                      console.log('Setting isAccountOpen to:', newState);
+                      return newState;
+                    });
+                  }}
                   variant="outline"
                   size="sm"
                   className="border-white/20 text-white hover:bg-white/20 text-sm px-2 py-2 h-12 flex items-center gap-2"
@@ -287,28 +508,92 @@ export default function Navbar({ className, isAuthenticated }: NavbarProps) {
                 
                 {/* Custom Dropdown Content */}
                 {isAccountOpen && (
-                  <div className="absolute right-0 top-full mt-2 w-56 rounded-md shadow-lg border border-gray-700 z-[999999]" style={{ backgroundColor: '#1F1F1F' }}>
-                    <div className="py-1">
-                      {/* X Connection Section */}
-                      <div className="px-3 py-1.5">
-                        {session?.user?.username ? (
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2 text-green-600">
-                              <Twitter className="h-4 w-4" />
-                              <span className="text-sm font-medium">X Connected</span>
-                            </div>
-                            <Button
-                              onClick={() => signOut({ callbackUrl: window.location.origin })}
-                              variant="ghost"
-                              size="sm"
-                              className="text-red-600 hover:bg-red-50 px-2 py-1 h-6 text-xs"
-                            >
-                              Disconnect
-                            </Button>
-                          </div>
-                        ) : (
+                  <div 
+                    data-account-dropdown
+                    className="absolute right-0 top-full mt-2 w-72 rounded-md shadow-lg border border-gray-700 z-[999999]" 
+                    style={{ backgroundColor: '#1F1F1F' }}
+                  >
+                    <div className="py-3">
+                      {/* X Connection Section - Only show when NOT connected */}
+                      {(!user?.username || user?.username === user?.wallet_address) && (
+                        <div className="py-1.5 mb-3 flex justify-center">
                           <ConnectXButton />
-                        )}
+                        </div>
+                      )}
+
+                      {/* Profile Card */}
+                      <div className="px-3 mb-3">
+                        <div className="relative w-full h-64 rounded-lg overflow-hidden">
+                          {/* Card Background */}
+                          <div 
+                            className="absolute inset-0 bg-cover bg-center bg-no-repeat rounded-lg"
+                            style={{ 
+                              backgroundImage: 'url(/card.svg)',
+                              backgroundSize: '100% 100%',
+                              width: '100%',
+                              height: '100%'
+                            }}
+                          />
+                          
+                          {/* Profile Content Overlay - Positioned on top */}
+                          <div className="absolute top-0 left-0 right-0 h-48 flex flex-col items-center text-white p-4 pt-3">
+                            {/* Profile Picture */}
+                            <img
+                              src={getAvatarUrl()}
+                              alt="Profile"
+                              className="h-16 w-16 rounded-lg border-2 border-white/30 mb-3"
+                            />
+                            
+                            {/* Username/Wallet */}
+                            <div className="text-center mb-4">
+                              <div className="text-xl mb-1">
+                                {user?.username && user.username !== user?.wallet_address ? `@${user.username}` : publicKey.toString().slice(0, 4) + '...' + publicKey.toString().slice(-4)}
+                              </div>
+                            </div>
+                            
+                            {/* Stats Row */}
+                            <div className="flex justify-between w-full max-w-56">
+                              {/* Pixels Placed */}
+                              <div className="text-center">
+                                <div className="text-3xl font-bold bg-gradient-to-r from-[#EE00FF] to-[#EE5705] bg-clip-text text-transparent">
+                                  {user?.total_pixels_placed || 0}
+                                </div>
+                                <div className="text-sm text-gray-200">
+                                  Pixels Placed
+                                </div>
+                              </div>
+                              
+                              {/* VIBEY Burned */}
+                              <div className="text-center">
+                                <div className="text-3xl font-bold bg-gradient-to-r from-[#FFA371] to-[#EE5705] bg-clip-text text-transparent">
+                                  {Math.floor(Number(user?.total_tokens_burned) || 0)}
+                                </div>
+                                <div className="text-sm text-gray-200">
+                                  $VIBEY Burned
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Share on X Button */}
+                      <div className="px-3">
+                        <Button
+                          onClick={() => shareProfileCard()}
+                          variant="ghost"
+                          size="sm"
+                          className="w-full justify-center text-sm px-2 py-1.5 h-8 rounded-full"
+                          style={{
+                            background: 'linear-gradient(to right, #EE2B7E, #EE5705)',
+                            color: 'white'
+                          }}
+                        >
+                          Share on
+                          <svg className="h-4 w-4 ml-2" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                          </svg>
+                        </Button>
                       </div>
                     </div>
                   </div>

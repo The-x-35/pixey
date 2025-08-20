@@ -41,6 +41,7 @@ export const useXConnection = () => {
           wallet_address: publicKey.toString(),
           username: session.user.username,
           profile_picture: session.user.profilePicture,
+          isXConnection: true,
         }),
       });
 
