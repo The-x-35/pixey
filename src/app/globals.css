@@ -1,8 +1,9 @@
 @import "tailwindcss";
+@import "../styles/custom-wallet-button.css";
 
 @font-face {
-  font-family: 'Matrix Sans Video';
-  src: url('/fonts/MatrixSansVideo-Regular.ttf') format('truetype');
+  font-family: "Matrix Sans Video";
+  src: url("/fonts/MatrixSansVideo-Regular.ttf") format("truetype");
   font-weight: normal;
   font-style: normal;
   font-display: swap;
@@ -30,8 +31,8 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: 'Matrix Sans Video', Arial, Helvetica, sans-serif;
-  background-image: url('/bg.svg');
+  font-family: "Matrix Sans Video", Arial, Helvetica, sans-serif;
+  background-image: url("/bg.svg");
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -40,7 +41,7 @@ body {
 
 /* Apply Matrix Sans Video to all elements */
 * {
-  font-family: 'Matrix Sans Video', Arial, Helvetica, sans-serif;
+  font-family: "Matrix Sans Video", Arial, Helvetica, sans-serif;
 }
 
 /* Fix wallet adapter dropdown visibility - ensure it's above everything including backdrop-blur elements */
@@ -77,12 +78,25 @@ body {
 .wallet-adapter-button-wrapper {
   isolation: isolate !important;
 }
-
 /* Custom shaking animation for notifications */
 @keyframes shake {
-  0%, 100% { transform: translateX(0); }
-  10%, 30%, 50%, 70%, 90% { transform: translateX(-20px); }
-  20%, 40%, 60%, 80% { transform: translateX(20px); }
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  10%,
+  30%,
+  50%,
+  70%,
+  90% {
+    transform: translateX(-20px);
+  }
+  20%,
+  40%,
+  60%,
+  80% {
+    transform: translateX(20px);
+  }
 }
 
 .animate-shake {

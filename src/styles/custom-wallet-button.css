@@ -1,0 +1,55 @@
+/* Custom styles for Solana Wallet Adapter buttons - ONLY for main button, NOT modal options */
+.wallet-adapter-button:not(.wallet-adapter-modal-list-item):not(
+    [role="menuitem"]
+  ):not(.wallet-adapter-modal-wrapper .wallet-adapter-button) {
+  /* Apply your custom styles */
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+
+  /* Custom colors - you can change these */
+  background: rgba(52, 5, 238, 0.6) !important;
+  color: #ffffff !important;
+
+  /* Custom sizing - you can change these */
+  padding: 12px 16px !important;
+
+  /* Typography - you can change these */
+  font-family: "Matrix Sans Video", Arial, Helvetica, sans-serif !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+
+  /* Border and shape - you can change these */
+  border-radius: 2px !important;
+  border: 1px solid #3405ee !important;
+
+  /* Effects and transitions */
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3) !important;
+  cursor: pointer !important;
+  transition: all 0.3s ease !important;
+  text-decoration: none !important;
+}
+
+/* Hover states - you can customize these */
+.wallet-adapter-button:hover {
+  background: rgba(52, 5, 238, 0.8) !important;
+  transform: translateY(-2px) !important;
+
+  border-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+/* Responsive adjustments - ONLY for main button */
+@media (max-width: 768px) {
+  .wallet-adapter-button-trigger:not(.wallet-adapter-modal-list-item):not(
+      [role="menuitem"]
+    ):not(.wallet-adapter-modal-wrapper .wallet-adapter-button),
+  .wallet-adapter-button:not(.wallet-adapter-modal-list-item):not(
+      [role="menuitem"]
+    ):not(.wallet-adapter-modal-wrapper .wallet-adapter-button) {
+    padding: 10px 20px !important;
+    height: 44px !important;
+    min-height: 44px !important;
+    max-height: 44px !important;
+    font-size: 14px !important;
+  }
+}

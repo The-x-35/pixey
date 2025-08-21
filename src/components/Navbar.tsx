@@ -417,7 +417,7 @@ export default function Navbar({ className, isAuthenticated, onMobileMenuChange 
         {/* Left side - Logo and Notification */}
         <div className="flex items-center space-x-4">
           <div className="flex flex-col space-y-2">
-            <img src="/logo.svg" alt="Pixey Logo" className="h-16 w-auto" />
+            <img src="/logo.svg" alt="Pixey Logo" className="h-8 sm:h-12 w-auto" />
             
             {/* Mobile Notification - Below logo */}
             {currentNotification && (
@@ -464,7 +464,7 @@ export default function Navbar({ className, isAuthenticated, onMobileMenuChange 
         {/* Middle - Pixels and Burned Stats - Hidden on mobile */}
         <div className="hidden md:flex items-center space-x-2">
           {/* Total Burned Stats */}
-          <div className="flex items-center space-x-2 bg-white/10 rounded-lg px-2 py-2 border border-white/20 h-12">
+          <div className="flex items-center space-x-2 bg-white/10 rounded-lg px-3 py-3 border border-white/20">
             <div className="text-center">
               <div className="text-sm text-white">
                 🔥 <span className="bg-gradient-to-r from-[#FFA371] to-[#EE5705] bg-clip-text text-transparent font-bold">
@@ -475,7 +475,7 @@ export default function Navbar({ className, isAuthenticated, onMobileMenuChange 
           </div>
           
           {/* Pixels Placed Stats */}
-          <div className="flex items-center space-x-2 bg-white/10 rounded-lg px-2 py-2 border border-white/20 h-12">
+          <div className="flex items-center space-x-2 bg-white/10 rounded-lg px-3 py-3 border border-white/20">
             <div className="text-center">
               <div className="text-sm text-white">
                 <span className="text-gray-300">Pixels Placed: </span>
@@ -498,7 +498,7 @@ export default function Navbar({ className, isAuthenticated, onMobileMenuChange 
                   onClick={() => setShowGetPixels(true)}
                   variant="outline"
                   size="sm"
-                  className="border-yellow-500/30 text-white hover:bg-yellow-500/30 text-sm px-2 py-2 h-12"
+                  className="border-yellow-500/30 text-white hover:bg-yellow-500/30 text-sm px-3 py-4"
                   style={{ backgroundColor: '#FFAE0033' }}
                 >
                   <Coins className="h-3 w-3 mr-1 text-white" />
