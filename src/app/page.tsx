@@ -169,7 +169,7 @@ function GameContent() {
             {publicKey && isAuthenticated && (
               <Button
                 onClick={() => setShowGetPixels(true)}
-                className="md:hidden border border-yellow-500/30 text-white hover:bg-yellow-500/30 text-sm px-6 py-2 h-auto flex items-center"
+                className="md:hidden border border-yellow-500/30 text-white hover:bg-yellow-500/30 px-6 py-2 h-auto flex items-center"
                 style={{ backgroundColor: '#FFAE0033' }}
               >
                 <Coins className="h-3 w-3 mr-1 text-white" />

@@ -64,7 +64,7 @@ const ToastItem = ({ toast }: { toast: ToastType }) => {
         <ToastIcon type={toast.type} />
       </div>
       
-      <div className="flex-1 text-sm font-medium">
+      <div className="flex-1 text-center text-sm font-medium flex items-center justify-center">
         {toast.message}
       </div>
       
