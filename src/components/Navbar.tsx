@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { useState, useEffect } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
@@ -42,7 +42,16 @@ export default function Navbar({ className, isAuthenticated, onMobileMenuChange 
   const { user, pixelBoard, addToast } = useGameStore();
   const { data: session } = useSession();
   const [showTopPlayers, setShowTopPlayers] = useState(false);
-  const [topPlayers, setTopPlayers] = useState<Array<{wallet_address: string, total_pixels_placed: number, free_pixels: number, total_tokens_burned: string, username?: string, profile_picture?: string}>>([]);
+  const [topPlayers, setTopPlayers] = useState<
+    Array<{
+      wallet_address: string;
+      total_pixels_placed: number;
+      free_pixels: number;
+      total_tokens_burned: string;
+      username?: string;
+      profile_picture?: string;
+    }>
+  >([]);
   const [totalBurnedTokens, setTotalBurnedTokens] = useState(0);
   const [currentNotification, setCurrentNotification] = useState<string | null>(null);
   const [currentNotificationType, setCurrentNotificationType] = useState<string>('pixel_placed');
@@ -215,67 +224,180 @@ export default function Navbar({ className, isAuthenticated, onMobileMenuChange 
       const ctx = canvas.getContext('2d');
       if (!ctx) return;
 
-      // Set canvas size
-      canvas.width = 400;
-      canvas.height = 300;
+      // Set canvas size to 1:1 aspect ratio with high resolution for better quality
+      const size = 800; // High resolution square canvas
+      canvas.width = size;
+      canvas.height = size;
 
       // Load the card background image
       const cardImg = new Image();
-      cardImg.crossOrigin = 'anonymous';
-      
-      cardImg.onload = () => {
-        // Draw the background
-        ctx.drawImage(cardImg, 0, 0, 400, 300);
-        
+      cardImg.crossOrigin = "anonymous";
+
+      cardImg.onload = async () => {
+        // Enable high-quality rendering
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = "high";
+
+        // Load MatrixSansVideo font properly
+        try {
+          const font = new FontFace(
+            "MatrixSansVideo",
+            "url(/fonts/MatrixSansVideo-Regular.ttf)"
+          );
+          await font.load();
+          document.fonts.add(font);
+        } catch (error) {
+          console.log("MatrixSansVideo font not loaded, using fallback");
+        }
+
+        // Draw the background to fill the square canvas
+        ctx.drawImage(cardImg, 0, 0, size, size);
+
         // Draw profile picture
         const profileImg = new Image();
-        profileImg.crossOrigin = 'anonymous';
+        profileImg.crossOrigin = "anonymous";
         profileImg.onload = () => {
-          // Create circular profile picture
+          // Create rounded rectangle profile picture (not circular)
           ctx.save();
+          // Scale all dimensions proportionally for the larger canvas
+          const scale = size / 400; // Base scale factor
+          const profileSize = 100 * scale; // Larger profile picture
+          const x = (size - profileSize) / 2; // Center horizontally
+          const y = 50 * scale; // Top padding - MOVED UP (LINE 303: PROFILE PICTURE VERTICAL POSITION)
+          const radius = 12 * scale; // Rounded corners
+
+          // Draw rounded rectangle path
           ctx.beginPath();
-          ctx.arc(200, 80, 32, 0, 2 * Math.PI);
-          ctx.clip();
-          ctx.drawImage(profileImg, 168, 48, 64, 64);
-          ctx.restore();
-          
-          // Draw username/wallet
-          ctx.fillStyle = 'white';
-          ctx.font = 'bold 20px Arial';
-          ctx.textAlign = 'center';
-          ctx.fillText(
-            user?.username && user.username !== user?.wallet_address 
-              ? user.username 
-              : publicKey.toString().slice(0, 4) + '...' + publicKey.toString().slice(-4),
-            200, 140
+          ctx.moveTo(x + radius, y);
+          ctx.lineTo(x + profileSize - radius, y);
+          ctx.quadraticCurveTo(x + profileSize, y, x + profileSize, y + radius);
+          ctx.lineTo(x + profileSize, y + profileSize - radius);
+          ctx.quadraticCurveTo(
+            x + profileSize,
+            y + profileSize,
+            x + profileSize - radius,
+            y + profileSize
           );
-          
-          // Draw stats
-          ctx.font = 'bold 24px Arial';
-          ctx.fillStyle = '#FCD34D'; // Yellow for pixels
-          ctx.textAlign = 'center';
-          ctx.fillText((user?.total_pixels_placed || 0).toString(), 120, 200);
-          ctx.fillText((user?.total_tokens_burned || 0).toString(), 280, 200);
-          
-          ctx.font = '12px Arial';
-          ctx.fillStyle = '#E5E7EB';
-          ctx.fillText('pixels placed', 120, 220);
-          ctx.fillText('$VIBEY burned', 280, 220);
-          
+          ctx.lineTo(x + radius, y + profileSize);
+          ctx.quadraticCurveTo(x, y + profileSize, x, y + profileSize - radius);
+          ctx.lineTo(x, y + radius);
+          ctx.quadraticCurveTo(x, y, x + radius, y);
+          ctx.closePath();
+          ctx.clip();
+
+          // Draw the profile image
+          ctx.drawImage(profileImg, x, y, profileSize, profileSize);
+          ctx.restore();
+
+          // Draw border around profile picture
+          ctx.strokeStyle = "rgba(255, 255, 255, 0.3)";
+          ctx.lineWidth = 3 * scale;
+          ctx.beginPath();
+          ctx.moveTo(x + radius, y);
+          ctx.lineTo(x + profileSize - radius, y);
+          ctx.quadraticCurveTo(x + profileSize, y, x + profileSize, y + radius);
+          ctx.lineTo(x + profileSize, y + profileSize - radius);
+          ctx.quadraticCurveTo(
+            x + profileSize,
+            y + profileSize,
+            x + profileSize - radius,
+            y + profileSize
+          );
+          ctx.lineTo(x + radius, y + profileSize);
+          ctx.quadraticCurveTo(x, y + profileSize, x, y + profileSize - radius);
+          ctx.lineTo(x, y + radius);
+          ctx.quadraticCurveTo(x, y, x + radius, y);
+          ctx.closePath();
+          ctx.stroke();
+
+          // Draw username/wallet
+          ctx.fillStyle = "white";
+          ctx.font = `bold ${14 * scale}px MatrixSansVideo, sans-serif`; // Same size as labels
+          ctx.textAlign = "center";
+          const username =
+            user?.username && user.username !== user?.wallet_address
+              ? `@${user.username}`
+              : publicKey.toString().slice(0, 4) +
+                "..." +
+                publicKey.toString().slice(-4);
+          ctx.fillText(username, size / 2, y + profileSize + 25 * scale); // WALLET TEXT POSITION (LINE 360: CHANGE '25' TO MOVE UP/DOWN)
+
+          // Draw stats - positioned to match the actual card layout exactly
+          // The stats should be in the middle area, not overlapping with logo
+          const statsY = y + profileSize + 110 * scale; // Position for stats numbers - MOVED DOWN (LINE 364: CHANGE '110' TO MOVE STATS UP/DOWN)
+          const labelsY = statsY + 20 * scale; // Position for labels (LINE 365: CHANGE '20' TO ADJUST LABEL SPACING FROM NUMBERS)
+
+          // Move stats more to edges - minimal padding
+          const padding = 0 * scale; // No padding for more extreme positioning
+          const containerWidth = 360 * scale; // max-w-56 = 224px
+          const containerLeft = (size - containerWidth) / 2;
+          const leftX = containerLeft + padding; // Left align at edge (LINE FOR LEFT POSITIONING)
+          const rightX = containerLeft + containerWidth - padding; // Right align at edge (LINE FOR RIGHT POSITIONING)
+
+          // Pixels Placed (left side)
+          ctx.font = `bold ${60 * scale}px MatrixSansVideo, sans-serif`; // 2x size, MatrixSansVideo only
+          ctx.textAlign = "left";
+          // Create gradient effect for pixels placed (purple to orange)
+          const pixelGradient = ctx.createLinearGradient(
+            leftX,
+            statsY - 30 * scale,
+            leftX + 120 * scale,
+            statsY - 30 * scale
+          );
+          pixelGradient.addColorStop(0, "#EE00FF");
+          pixelGradient.addColorStop(1, "#EE5705");
+          ctx.fillStyle = pixelGradient;
+          ctx.fillText(
+            (user?.total_pixels_placed || 0).toString(),
+            leftX,
+            statsY
+          );
+
+          ctx.font = `${14 * scale}px MatrixSansVideo, sans-serif`; // Back to original size
+          ctx.fillStyle = "#E5E7EB";
+          ctx.fillText("Pixels Placed", leftX, labelsY);
+
+          // VIBEY Burned (right side)
+          ctx.font = `bold ${60 * scale}px MatrixSansVideo, sans-serif`; // Keep 2x size for numbers
+          ctx.textAlign = "right";
+          // Create gradient effect for VIBEY burned (orange gradient)
+          const vibeyGradient = ctx.createLinearGradient(
+            rightX - 120 * scale,
+            statsY - 30 * scale,
+            rightX,
+            statsY - 30 * scale
+          );
+          vibeyGradient.addColorStop(0, "#FFA371");
+          vibeyGradient.addColorStop(1, "#EE5705");
+          ctx.fillStyle = vibeyGradient;
+          ctx.fillText(
+            Math.floor(Number(user?.total_tokens_burned) || 0).toString(),
+            rightX,
+            statsY
+          );
+
+          ctx.font = `${14 * scale}px MatrixSansVideo, sans-serif`; // Back to original size
+          ctx.fillStyle = "#E5E7EB";
+          ctx.fillText("$VIBEY Burned", rightX, labelsY);
+
           // Convert canvas to blob and share to X
-          canvas.toBlob((blob) => {
-            if (blob) {
-              // Share to X using proper X sharing method
-              shareToX(blob);
-            }
-          }, 'image/png');
+          canvas.toBlob(
+            (blob) => {
+              if (blob) {
+                // Share to X using proper X sharing method
+                shareToX(blob);
+              }
+            },
+            "image/png",
+            0.95
+          ); // High quality PNG
         };
         profileImg.src = getAvatarUrl();
       };
-      
-      cardImg.src = '/card.svg';
+
+      cardImg.src = "/card.svg";
     } catch (error) {
-      console.error('Error sharing profile card:', error);
+      console.error("Error sharing profile card:", error);
     }
   };
 
@@ -283,33 +405,36 @@ export default function Navbar({ className, isAuthenticated, onMobileMenuChange 
     try {
       // Step 1: Copy image to clipboard
       await copyImageToClipboard(blob);
-      
+
       // Step 2: Show success toast
       addToast({
-        message: 'Image copied to clipboard! Opening X...',
-        type: 'success',
+        message: "Image copied to clipboard! Opening X...",
+        type: "success",
         duration: 3000,
       });
-      
+
       // Step 3: Wait a moment for user to see the toast, then open X
       setTimeout(() => {
-        const text = encodeURIComponent('Checkout my progress on pixey.vibegame.fun');
+        const text = encodeURIComponent(
+          "Checkout my progress on pixey.vibegame.fun"
+        );
         const xUrl = `https://twitter.com/intent/tweet?text=${text}`;
-        window.open(xUrl, '_blank', 'width=600,height=400');
+        window.open(xUrl, "_blank", "width=600,height=400");
       }, 1500);
-      
     } catch (error) {
-      console.error('Error copying image to clipboard:', error);
+      console.error("Error copying image to clipboard:", error);
       addToast({
-        message: 'Failed to copy image. Opening X anyway...',
-        type: 'error',
+        message: "Failed to copy image. Opening X anyway...",
+        type: "error",
         duration: 3000,
       });
-      
+
       // Fallback: open X without clipboard copy
-      const text = encodeURIComponent('Checkout my progress on pixey.vibegame.fun');
+      const text = encodeURIComponent(
+        "Checkout my progress on pixey.vibegame.fun"
+      );
       const xUrl = `https://twitter.com/intent/tweet?text=${text}`;
-      window.open(xUrl, '_blank', 'width=600,height=400');
+      window.open(xUrl, "_blank", "width=600,height=400");
     }
   };
 
@@ -317,47 +442,47 @@ export default function Navbar({ className, isAuthenticated, onMobileMenuChange 
     try {
       // Convert blob to clipboard item
       const clipboardItem = new ClipboardItem({
-        'image/png': blob
+        "image/png": blob,
       });
-      
+
       await navigator.clipboard.write([clipboardItem]);
     } catch (error) {
-      console.error('Clipboard API failed, trying fallback method:', error);
-      
+      console.error("Clipboard API failed, trying fallback method:", error);
+
       // Fallback: convert blob to canvas and use canvas.toBlob
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      if (!ctx) throw new Error('Could not get canvas context');
-      
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+      if (!ctx) throw new Error("Could not get canvas context");
+
       const img = new Image();
       img.onload = () => {
         canvas.width = img.width;
         canvas.height = img.height;
         ctx.drawImage(img, 0, 0);
-        
+
         canvas.toBlob(async (blob) => {
           if (blob) {
             try {
               const clipboardItem = new ClipboardItem({
-                'image/png': blob
+                "image/png": blob,
               });
               await navigator.clipboard.write([clipboardItem]);
             } catch (fallbackError) {
-              throw new Error('All clipboard methods failed');
+              throw new Error("All clipboard methods failed");
             }
           }
-        }, 'image/png');
+        }, "image/png");
       };
-      
+
       img.src = URL.createObjectURL(blob);
     }
   };
 
   const downloadImage = (blob: Blob) => {
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
+    const a = document.createElement("a");
     a.href = url;
-    a.download = 'pixey-profile-card.png';
+    a.download = "pixey-profile-card.png";
     document.body.appendChild(a); // Required for Firefox.
     a.click();
     document.body.removeChild(a); // Clean up.
@@ -366,9 +491,9 @@ export default function Navbar({ className, isAuthenticated, onMobileMenuChange 
 
   const formatLargeNumber = (num: number): string => {
     if (num >= 1_000_000) {
-      return (num / 1_000_000).toFixed(2) + ' million';
+      return (num / 1_000_000).toFixed(2) + " million";
     } else if (num >= 1_000) {
-      return (num / 1_000).toFixed(2) + 'k';
+      return (num / 1_000).toFixed(2) + "k";
     } else {
       return num.toFixed(2);
     }
@@ -376,7 +501,7 @@ export default function Navbar({ className, isAuthenticated, onMobileMenuChange 
 
   const fetchTopPlayers = async () => {
     try {
-      const response = await fetch('/api/users');
+      const response = await fetch("/api/users");
       if (response.ok) {
         const result = await response.json();
         if (result.success && result.data) {
@@ -385,10 +510,10 @@ export default function Navbar({ className, isAuthenticated, onMobileMenuChange 
             .slice(0, 10); // Already sorted by API
           setTopPlayers(sortedUsers);
         } else {
-          console.error('Invalid API response format');
+          console.error("Invalid API response format");
         }
       } else {
-        console.error('Failed to fetch top players');
+        console.error("Failed to fetch top players");
       }
 
       // Fetch total burned tokens from Solana
@@ -396,10 +521,10 @@ export default function Navbar({ className, isAuthenticated, onMobileMenuChange 
         const burnedTokens = await getTotalBurnedTokens();
         setTotalBurnedTokens(burnedTokens);
       } catch (error) {
-        console.error('Error fetching burned tokens:', error);
+        console.error("Error fetching burned tokens:", error);
       }
     } catch (error) {
-      console.error('Error fetching top players:', error);
+      console.error("Error fetching top players:", error);
     }
   };
 
@@ -410,15 +535,16 @@ export default function Navbar({ className, isAuthenticated, onMobileMenuChange 
 
   return (
     <>
-      <nav className={cn(
-        "flex flex-col pt-4 px-4",
-        className
-      )}>
+      <nav className={cn("flex flex-col pt-4 px-4", className)}>
         {/* Top row - Logo and Hamburger Menu */}
         <div className="flex items-center justify-between mb-2">
           {/* Left side - Logo */}
           <div className="flex items-center">
-            <img src="/logo.svg" alt="Pixey Logo" className="h-8 sm:h-12 w-auto md:hidden" />
+            <img
+              src="/logo.svg"
+              alt="Pixey Logo"
+              className="h-8 sm:h-12 w-auto md:hidden"
+            />
           </div>
 
           {/* Right side - Hamburger Menu */}
@@ -432,18 +558,25 @@ export default function Navbar({ className, isAuthenticated, onMobileMenuChange 
 
         {/* Bottom row - Mobile Notification */}
         {currentNotification && (
-          <div className={`md:hidden rounded-lg px-3 py-2 border backdrop-blur-md ${
-            currentNotificationColor === 'green' ? 'bg-green-400/20 border-green-400/40 shadow-lg shadow-green-400/20' :
-            currentNotificationColor === 'yellow' ? 'bg-yellow-400/20 border-yellow-400/40 shadow-lg shadow-green-400/20' :
-            currentNotificationColor === 'red' ? 'bg-red-400/20 border-red-400/40 shadow-lg shadow-green-400/20' :
-            currentNotificationColor === 'blue' ? 'bg-blue-400/20 border-blue-400/40 shadow-lg shadow-blue-400/20' :
-            currentNotificationColor === 'purple' ? 'bg-purple-400/20 border-purple-400/40 shadow-lg shadow-green-400/20' :
-            currentNotificationColor === 'pink' ? 'bg-pink-400/20 border-pink-400/40 shadow-lg shadow-green-400/20' :
-            currentNotificationColor === 'orange' ? 'bg-orange-400/20 border-orange-400/40 shadow-lg shadow-green-400/20' :
-            'bg-cyan-400/20 border-cyan-400/40 shadow-lg shadow-cyan-400/20'
-          } ${
-            isShaking ? 'animate-shake' : ''
-          }`}>
+          <div
+            className={`md:hidden rounded-lg px-3 py-2 border backdrop-blur-md ${
+              currentNotificationColor === "green"
+                ? "bg-green-400/20 border-green-400/40 shadow-lg shadow-green-400/20"
+                : currentNotificationColor === "yellow"
+                ? "bg-yellow-400/20 border-yellow-400/40 shadow-lg shadow-green-400/20"
+                : currentNotificationColor === "red"
+                ? "bg-red-400/20 border-red-400/40 shadow-lg shadow-green-400/20"
+                : currentNotificationColor === "blue"
+                ? "bg-blue-400/20 border-blue-400/40 shadow-lg shadow-blue-400/20"
+                : currentNotificationColor === "purple"
+                ? "bg-purple-400/20 border-purple-400/40 shadow-lg shadow-green-400/20"
+                : currentNotificationColor === "pink"
+                ? "bg-pink-400/20 border-pink-400/40 shadow-lg shadow-green-400/20"
+                : currentNotificationColor === "orange"
+                ? "bg-orange-400/20 border-orange-400/40 shadow-lg shadow-green-400/20"
+                : "bg-cyan-400/20 border-cyan-400/40 shadow-lg shadow-cyan-400/20"
+            } ${isShaking ? "animate-shake" : ""}`}
+          >
             <div className="text-sm font-medium text-white drop-shadow-sm text-center">
               {currentNotification}
             </div>
@@ -455,23 +588,34 @@ export default function Navbar({ className, isAuthenticated, onMobileMenuChange 
           {/* Desktop Logo and Notification */}
           <div className="flex items-center space-x-4">
             <div className="flex flex-col space-y-2">
-              <img src="/logo.svg" alt="Pixey Logo" className="h-8 sm:h-12 w-auto" />
+              <img
+                src="/logo.svg"
+                alt="Pixey Logo"
+                className="h-8 sm:h-12 w-auto"
+              />
             </div>
-            
+
             {/* Desktop Notification */}
             {currentNotification && (
-              <div className={`rounded-lg px-3 py-3 border backdrop-blur-md flex items-center text-sm ${
-                currentNotificationColor === 'green' ? 'bg-green-400/20 border-green-400/40 shadow-lg shadow-green-400/20' :
-                currentNotificationColor === 'yellow' ? 'bg-yellow-400/20 border-yellow-400/40 shadow-lg shadow-green-400/20' :
-                currentNotificationColor === 'red' ? 'bg-red-400/20 border-red-400/40 shadow-lg shadow-green-400/20' :
-                currentNotificationColor === 'blue' ? 'bg-blue-400/20 border-blue-400/40 shadow-lg shadow-blue-400/20' :
-                currentNotificationColor === 'purple' ? 'bg-purple-400/20 border-purple-400/40 shadow-lg shadow-green-400/20' :
-                currentNotificationColor === 'pink' ? 'bg-pink-400/20 border-pink-400/40 shadow-lg shadow-green-400/20' :
-                currentNotificationColor === 'orange' ? 'bg-orange-400/20 border-orange-400/40 shadow-lg shadow-green-400/20' :
-                'bg-cyan-400/20 border-cyan-400/40 shadow-lg shadow-cyan-400/20'
-              } ${
-                isShaking ? 'animate-shake' : ''
-              }`}>
+              <div
+                className={`rounded-lg px-3 py-3 border backdrop-blur-md flex items-center text-sm ${
+                  currentNotificationColor === "green"
+                    ? "bg-green-400/20 border-green-400/40 shadow-lg shadow-green-400/20"
+                    : currentNotificationColor === "yellow"
+                    ? "bg-yellow-400/20 border-yellow-400/40 shadow-lg shadow-green-400/20"
+                    : currentNotificationColor === "red"
+                    ? "bg-red-400/20 border-red-400/40 shadow-lg shadow-green-400/20"
+                    : currentNotificationColor === "blue"
+                    ? "bg-blue-400/20 border-blue-400/40 shadow-lg shadow-blue-400/20"
+                    : currentNotificationColor === "purple"
+                    ? "bg-purple-400/20 border-purple-400/40 shadow-lg shadow-green-400/20"
+                    : currentNotificationColor === "pink"
+                    ? "bg-pink-400/20 border-pink-400/40 shadow-lg shadow-green-400/20"
+                    : currentNotificationColor === "orange"
+                    ? "bg-orange-400/20 border-orange-400/40 shadow-lg shadow-green-400/20"
+                    : "bg-cyan-400/20 border-cyan-400/40 shadow-lg shadow-cyan-400/20"
+                } ${isShaking ? "animate-shake" : ""}`}
+              >
                 <div className="text-sm font-medium text-white drop-shadow-sm">
                   {currentNotification}
                 </div>
@@ -485,20 +629,24 @@ export default function Navbar({ className, isAuthenticated, onMobileMenuChange 
             <div className="flex items-center space-x-2 bg-white/10 rounded-lg px-3 py-3 border border-white/20">
               <div className="text-center">
                 <div className="text-sm text-white">
-                  🔥 <span className="bg-gradient-to-r from-[#FFA371] to-[#EE5705] bg-clip-text text-transparent font-bold">
+                  🔥{" "}
+                  <span className="bg-gradient-to-r from-[#FFA371] to-[#EE5705] bg-clip-text text-transparent font-bold">
                     {formatLargeNumber(totalBurnedTokens)}
-                  </span> $VIBEY Burned
+                  </span>{" "}
+                  $VIBEY Burned
                 </div>
               </div>
             </div>
-            
+
             {/* Pixels Placed Stats */}
             <div className="flex items-center space-x-2 bg-white/10 rounded-lg px-3 py-3 border border-white/20">
               <div className="text-center">
                 <div className="text-sm text-white">
                   <span className="text-gray-300">Pixels Placed: </span>
                   <span className="font-bold">
-                    {pixelBoard.pixels ? Object.keys(pixelBoard.pixels).length : 0}
+                    {pixelBoard.pixels
+                      ? Object.keys(pixelBoard.pixels).length
+                      : 0}
                   </span>
                 </div>
               </div>
@@ -518,7 +666,7 @@ export default function Navbar({ className, isAuthenticated, onMobileMenuChange 
                       variant="outline"
                       size="sm"
                       className="border-yellow-500/30 text-white hover:bg-yellow-500/30 text-sm px-2 py-2 h-12 flex items-center"
-                      style={{ backgroundColor: '#FFAE0033' }}
+                      style={{ backgroundColor: "#FFAE0033" }}
                     >
                       <Coins className="h-4 w-4 mr-2 text-white" />
                       Buy Pixels
@@ -530,17 +678,20 @@ export default function Navbar({ className, isAuthenticated, onMobileMenuChange 
                     <Button
                       data-account-button
                       onClick={() => {
-                        console.log('Account button clicked, current state:', isAccountOpen);
-                        setIsAccountOpen(prev => {
+                        console.log(
+                          "Account button clicked, current state:",
+                          isAccountOpen
+                        );
+                        setIsAccountOpen((prev) => {
                           const newState = !prev;
-                          console.log('Setting isAccountOpen to:', newState);
+                          console.log("Setting isAccountOpen to:", newState);
                           return newState;
                         });
                       }}
                       variant="outline"
                       size="sm"
                       className="border-white/20 text-white hover:bg-white/20 text-sm px-2 py-2 h-12 flex items-center gap-2"
-                      style={{ backgroundColor: '#3405EE66' }}
+                      style={{ backgroundColor: "#3405EE66" }}
                     >
                       <img
                         src={getAvatarUrl()}
@@ -549,85 +700,101 @@ export default function Navbar({ className, isAuthenticated, onMobileMenuChange 
                       />
                       <div className="text-left">
                         <div className="text-base font-medium text-white">
-                          {user?.username && user.username !== user?.wallet_address ? user.username : publicKey.toString().slice(0, 4) + '...' + publicKey.toString().slice(-4)}
+                          {user?.username &&
+                          user.username !== user?.wallet_address
+                            ? user.username
+                            : publicKey.toString().slice(0, 4) +
+                              "..." +
+                              publicKey.toString().slice(-4)}
                         </div>
                         <div className="text-base text-gray-300">
-                          {user?.total_pixels_placed || 0} placed • {user?.free_pixels || 0} left
+                          {user?.total_pixels_placed || 0} placed •{" "}
+                          {user?.free_pixels || 0} left
                         </div>
                       </div>
                       <ChevronDown className="h-3 w-3" />
                     </Button>
-                    
+
                     {/* Custom Dropdown Content */}
                     {isAccountOpen && (
                       <div
                         data-account-dropdown
-                        className="absolute right-0 top-full mt-2 w-72 rounded-md shadow-lg border border-gray-700 z-[999999]" 
-                        style={{ backgroundColor: '#1F1F1F' }}
+                        className="absolute right-0 top-full mt-2 w-72 rounded-md shadow-lg border border-gray-700 z-[999999]"
+                        style={{ backgroundColor: "#1F1F1F" }}
                       >
                         <div className="py-3">
                           {/* X Connection Section - Only show when NOT connected */}
-                          {(!user?.username || user?.username === user?.wallet_address) && (
+                          {(!user?.username ||
+                            user?.username === user?.wallet_address) && (
                             <div className="py-1.5 mb-3 flex justify-center">
                               <ConnectXButton />
                             </div>
                           )}
 
-                          {/* Profile Card */}
-                          <div className="px-3 mb-3">
-                            <div className="relative w-full h-64 rounded-lg overflow-hidden">
-                              {/* Card Background */}
-                              <div
-                                className="absolute inset-0 bg-cover bg-center bg-no-repeat rounded-lg"
-                                style={{ 
-                                  backgroundImage: 'url(/card.svg)',
-                                  backgroundSize: '100% 100%',
-                                  width: '100%',
-                                  height: '100%'
-                                }}
-                              />
-                              
-                              {/* Profile Content Overlay - Positioned on top */}
-                              <div className="absolute top-0 left-0 right-0 h-48 flex flex-col items-center text-white p-4 pt-3">
-                                {/* Profile Picture */}
-                                <img
-                                  src={getAvatarUrl()}
-                                  alt="Profile"
-                                  className="h-16 w-16 rounded-lg border-2 border-white/30 mb-3"
+                          {/* Profile Card - Only show when authenticated */}
+                          {isAuthenticated && (
+                            <div className="px-3 mb-3">
+                              <div className="relative w-full h-64 rounded-lg overflow-hidden">
+                                {/* Card Background */}
+                                <div
+                                  className="absolute inset-0 bg-cover bg-center bg-no-repeat rounded-lg"
+                                  style={{
+                                    backgroundImage: "url(/card.svg)",
+                                    backgroundSize: "100% 100%",
+                                    width: "100%",
+                                    height: "100%",
+                                  }}
                                 />
-                                
-                                {/* Username/Wallet */}
-                                <div className="text-center mb-4">
-                                  <div className="text-xl mb-1">
-                                    {user?.username && user.username !== user?.wallet_address ? `@${user.username}` : publicKey.toString().slice(0, 4) + '...' + publicKey.toString().slice(-4)}
+
+                                {/* Profile Content Overlay - Positioned on top */}
+                                <div className="absolute top-0 left-0 right-0 h-48 flex flex-col items-center text-white p-4 pt-3">
+                                  {/* Profile Picture */}
+                                  <img
+                                    src={getAvatarUrl()}
+                                    alt="Profile"
+                                    className="h-16 w-16 rounded-lg border-2 border-white/30 mb-3"
+                                  />
+
+                                  {/* Username/Wallet */}
+                                  <div className="text-center mb-4">
+                                    <div className="text-xl mb-1">
+                                      {user?.username &&
+                                      user.username !== user?.wallet_address
+                                        ? `@${user.username}`
+                                        : publicKey.toString().slice(0, 4) +
+                                          "..." +
+                                          publicKey.toString().slice(-4)}
+                                    </div>
                                   </div>
-                                </div>
-                                
-                                {/* Stats Row */}
-                                <div className="flex justify-between w-full max-w-56">
-                                  {/* Pixels Placed */}
-                                  <div className="text-left">
-                                    <div className="text-3xl font-bold bg-gradient-to-r from-[#EE00FF] to-[#EE5705] bg-clip-text text-transparent">
-                                      {user?.total_pixels_placed || 0}
+
+                                  {/* Stats Row */}
+                                  <div className="flex justify-between w-full max-w-56">
+                                    {/* Pixels Placed */}
+                                    <div className="text-left">
+                                      <div className="text-3xl font-bold bg-gradient-to-r from-[#EE00FF] to-[#EE5705] bg-clip-text text-transparent">
+                                        {user?.total_pixels_placed || 0}
+                                      </div>
+                                      <div className="text-sm text-gray-200">
+                                        Pixels Placed
+                                      </div>
                                     </div>
-                                    <div className="text-sm text-gray-200">
-                                      Pixels Placed
-                                    </div>
-                                  </div>
-                                  
-                                  {/* VIBEY Burned */}
-                                  <div className="text-right">
-                                    <div className="text-3xl font-bold bg-gradient-to-r from-[#FFA371] to-[#EE5705] bg-clip-text text-transparent">
-                                      {Math.floor(Number(user?.total_tokens_burned) || 0)}
-                                    </div>
-                                    <div className="text-sm text-gray-200">
-                                      $VIBEY Burned
+
+                                    {/* VIBEY Burned */}
+                                    <div className="text-right">
+                                      <div className="text-3xl font-bold bg-gradient-to-r from-[#FFA371] to-[#EE5705] bg-clip-text text-transparent">
+                                        {Math.floor(
+                                          Number(user?.total_tokens_burned) || 0
+                                        )}
+                                      </div>
+                                      <div className="text-sm text-gray-200">
+                                        $VIBEY Burned
+                                      </div>
                                     </div>
                                   </div>
                                 </div>
                               </div>
                             </div>
-                          </div>
+                          )}
 
                           {/* Share on X Button */}
                           <div className="px-3">
@@ -637,13 +804,18 @@ export default function Navbar({ className, isAuthenticated, onMobileMenuChange 
                               size="sm"
                               className="w-full justify-center text-sm px-2 py-1.5 h-8 rounded-full"
                               style={{
-                                background: 'linear-gradient(to right, #EE2B7E, #EE5705)',
-                                color: 'white'
+                                background:
+                                  "linear-gradient(to right, #EE2B7E, #EE5705)",
+                                color: "white",
                               }}
                             >
                               Share on
-                              <svg className="h-4 w-4 ml-2" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                              <svg
+                                className="h-4 w-4 ml-2"
+                                viewBox="0 0 24 24"
+                                fill="currentColor"
+                              >
+                                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
                               </svg>
                             </Button>
                           </div>
@@ -687,42 +859,47 @@ export default function Navbar({ className, isAuthenticated, onMobileMenuChange 
               </Button>
             </div>
 
-              {/* Mobile Stats */}
-              <div className="space-y-4 mb-6">
-                {/* Total Burned Stats */}
-                <div className="bg-white/10 rounded-lg px-4 py-3 border border-white/20">
-                  <div className="text-center">
-                    <div className="text-sm text-white">
-                      🔥 <span className="bg-gradient-to-r from-[#FFA371] to-[#EE5705] bg-clip-text text-transparent font-bold">
-                        {formatLargeNumber(totalBurnedTokens)}
-                      </span> $VIBEY Burned
-                    </div>
-                  </div>
-                </div>
-                
-                {/* Pixels Placed Stats */}
-                <div className="bg-white/10 rounded-lg px-4 py-3 border border-white/20">
-                  <div className="text-center">
-                    <div className="text-sm text-white">
-                      <span className="text-gray-300">Pixels Placed: </span>
-                      <span className="font-bold">
-                        {pixelBoard.pixels ? Object.keys(pixelBoard.pixels).length : 0}
-                      </span>
-                    </div>
+            {/* Mobile Stats */}
+            <div className="space-y-4 mb-6">
+              {/* Total Burned Stats */}
+              <div className="bg-white/10 rounded-lg px-4 py-3 border border-white/20">
+                <div className="text-center">
+                  <div className="text-sm text-white">
+                    🔥{" "}
+                    <span className="bg-gradient-to-r from-[#FFA371] to-[#EE5705] bg-clip-text text-transparent font-bold">
+                      {formatLargeNumber(totalBurnedTokens)}
+                    </span>{" "}
+                    $VIBEY Burned
                   </div>
                 </div>
               </div>
 
-              {/* Mobile Menu Items */}
-              <div className="space-y-4">
-                {/* Wallet Connection */}
-                {!publicKey ? (
-                  <div className="pt-4">
-                    <WalletMultiButton className="w-full bg-purple-600 hover:bg-purple-700 text-white px-3 py-3 h-12 !h-12 [&_button]:!py-3 [&_button]:!h-12 [&_button]:!min-h-[48px] [&_button]:!max-h-[48px] [&_button]:!leading-[48px]" />
+              {/* Pixels Placed Stats */}
+              <div className="bg-white/10 rounded-lg px-4 py-3 border border-white/20">
+                <div className="text-center">
+                  <div className="text-sm text-white">
+                    <span className="text-gray-300">Pixels Placed: </span>
+                    <span className="font-bold">
+                      {pixelBoard.pixels
+                        ? Object.keys(pixelBoard.pixels).length
+                        : 0}
+                    </span>
                   </div>
-                ) : (
-                  <div className="space-y-4 pt-4">
-                    {/* User Profile Section */}
+                </div>
+              </div>
+            </div>
+
+            {/* Mobile Menu Items */}
+            <div className="space-y-4">
+              {/* Wallet Connection */}
+              {!publicKey ? (
+                <div className="pt-4">
+                  <WalletMultiButton className="w-full bg-purple-600 hover:bg-purple-700 text-white px-3 py-3 h-12 !h-12 [&_button]:!py-3 [&_button]:!h-12 [&_button]:!min-h-[48px] [&_button]:!max-h-[48px] [&_button]:!leading-[48px]" />
+                </div>
+              ) : (
+                <div className="space-y-4 pt-4">
+                  {/* User Profile Section - Only show when authenticated */}
+                  {isAuthenticated && (
                     <div className="bg-white/5 rounded-lg p-4 border border-white/10">
                       <div className="flex items-center space-x-3 mb-3">
                         <img
@@ -747,93 +924,95 @@ export default function Navbar({ className, isAuthenticated, onMobileMenuChange 
                         </div>
                       )}
 
-                    {/* Mobile Profile Card */}
-                    <div className="mb-3">
-                      <div className="relative w-full h-64 rounded-lg overflow-hidden">
-                        {/* Card Background */}
-                        <div
-                          className="absolute inset-0 bg-cover bg-center bg-no-repeat rounded-lg"
-                          style={{
-                            backgroundImage: "url(/card.svg)",
-                            backgroundSize: "100% 100%",
-                            width: "100%",
-                            height: "100%",
-                          }}
-                        />
+                      {/* Mobile Profile Card - Only show when authenticated */}
+                      {isAuthenticated && (
+                        <div className="mb-3">
+                          <div className="relative w-full h-64 rounded-lg overflow-hidden">
+                            {/* Card Background */}
+                            <div
+                              className="absolute inset-0 bg-cover bg-center bg-no-repeat rounded-lg"
+                              style={{
+                                backgroundImage: "url(/card.svg)",
+                                backgroundSize: "100% 100%",
+                                width: "100%",
+                                height: "100%",
+                              }}
+                            />
 
-                        {/* Profile Content Overlay - Positioned on top */}
-                        <div className="absolute top-0 left-0 right-0 h-48 flex flex-col items-center text-white p-4 pt-3">
-                          {/* Profile Picture */}
-                          <img
-                            src={getAvatarUrl()}
-                            alt="Profile"
-                            className="h-16 w-16 rounded-lg border-2 border-white/30 mb-3"
-                          />
+                            {/* Profile Content Overlay - Positioned on top */}
+                            <div className="absolute top-0 left-0 right-0 h-48 flex flex-col items-center text-white p-4 pt-3">
+                              {/* Profile Picture */}
+                              <img
+                                src={getAvatarUrl()}
+                                alt="Profile"
+                                className="h-16 w-16 rounded-lg border-2 border-white/30 mb-3"
+                              />
 
-                          {/* Username/Wallet */}
-                          <div className="text-center mb-4">
-                            <div className="text-xl mb-1">
-                              {user?.username &&
-                              user.username !== user?.wallet_address
-                                ? `@${user.username}`
-                                : publicKey.toString().slice(0, 4) +
-                                  "..." +
-                                  publicKey.toString().slice(-4)}
-                            </div>
-                          </div>
-
-                          {/* Stats Row */}
-                          <div className="flex justify-between w-full max-w-56">
-                            {/* Pixels Placed */}
-                            <div className="text-left">
-                              <div className="text-3xl font-bold bg-gradient-to-r from-[#EE00FF] to-[#EE5705] bg-clip-text text-transparent">
-                                {user?.total_pixels_placed || 0}
+                              {/* Username/Wallet */}
+                              <div className="text-center mb-4">
+                                <div className="text-xl mb-1">
+                                  {user?.username &&
+                                  user.username !== user?.wallet_address
+                                    ? `@${user.username}`
+                                    : publicKey.toString().slice(0, 4) +
+                                      "..." +
+                                      publicKey.toString().slice(-4)}
+                                </div>
                               </div>
-                              <div className="text-xs text-gray-200">
-                                Pixels Placed
-                              </div>
-                            </div>
 
-                            {/* VIBEY Burned */}
-                            <div className="text-right">
-                              <div className="text-3xl font-bold bg-gradient-to-r from-[#FFA371] to-[#EE5705] bg-clip-text text-transparent">
-                                {Math.floor(
-                                  Number(user?.total_tokens_burned) || 0
-                                )}
-                              </div>
-                              <div className="text-xs text-gray-200">
-                                $VIBEY Burned
+                              {/* Stats Row */}
+                              <div className="flex justify-between w-full max-w-56">
+                                {/* Pixels Placed */}
+                                <div className="text-left">
+                                  <div className="text-3xl font-bold bg-gradient-to-r from-[#EE00FF] to-[#EE5705] bg-clip-text text-transparent">
+                                    {user?.total_pixels_placed || 0}
+                                  </div>
+                                  <div className="text-xs text-gray-200">
+                                    Pixels Placed
+                                  </div>
+                                </div>
+
+                                {/* VIBEY Burned */}
+                                <div className="text-right">
+                                  <div className="text-3xl font-bold bg-gradient-to-r from-[#FFA371] to-[#EE5705] bg-clip-text text-transparent">
+                                    {Math.floor(
+                                      Number(user?.total_tokens_burned) || 0
+                                    )}
+                                  </div>
+                                  <div className="text-xs text-gray-200">
+                                    $VIBEY Burned
+                                  </div>
+                                </div>
                               </div>
                             </div>
                           </div>
                         </div>
-                      </div>
-                    </div>
+                      )}
 
-                    {/* Share Profile Button */}
-                    <Button
-                      onClick={() => {
-                        shareProfileCard();
-                        setIsMobileMenuOpen(false);
-                      }}
-                      variant="ghost"
-                      size="sm"
-                      className="w-full justify-center text-sm py-2 h-10 rounded-full mb-3"
-                      style={{
-                        background:
-                          "linear-gradient(to right, #EE2B7E, #EE5705)",
-                        color: "white",
-                      }}
-                    >
-                      Share Profile on
-                      <svg
-                        className="h-4 w-4 ml-2"
-                        viewBox="0 0 24 24"
-                        fill="currentColor"
+                      {/* Share Profile Button */}
+                      <Button
+                        onClick={() => {
+                          shareProfileCard();
+                          setIsMobileMenuOpen(false);
+                        }}
+                        variant="ghost"
+                        size="sm"
+                        className="w-full justify-center text-sm py-2 h-10 rounded-full mb-3"
+                        style={{
+                          background:
+                            "linear-gradient(to right, #EE2B7E, #EE5705)",
+                          color: "white",
+                        }}
                       >
-                        <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-                      </svg>
-                    </Button>
+                        Share Profile on
+                        <svg
+                          className="h-4 w-4 ml-2"
+                          viewBox="0 0 24 24"
+                          fill="currentColor"
+                        >
+                          <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                        </svg>
+                      </Button>
 
                       {/* Disconnect Button */}
                       <Button
@@ -849,12 +1028,13 @@ export default function Navbar({ className, isAuthenticated, onMobileMenuChange 
                         Disconnect Wallet
                       </Button>
                     </div>
-                  </div>
-                )}
-              </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
-        )}
+        </div>
+      )}
 
       {/* Top Players Dialog */}
       <Dialog open={showTopPlayers} onOpenChange={setShowTopPlayers}>
