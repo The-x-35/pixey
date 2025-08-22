@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { useState, useEffect } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
@@ -318,7 +318,7 @@ export default function GetPixelsModal({ isOpen, onClose }: GetPixelsModalProps)
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md w-[calc(100vw-24px)] md:w-full">
         <DialogHeader>
           <DialogTitle className="text-white">
             {/* Removed "Buy Pixels" heading */}
