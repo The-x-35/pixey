@@ -22,9 +22,12 @@ const DialogOverlay = React.forwardRef<
       "fixed inset-0 z-50 bg-background/80 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
       className
     )}
+    style={{
+      backgroundColor: "rgba(0, 0, 0, 0.8)",
+    }}
     {...props}
   />
-))
+));
 DialogOverlay.displayName = DialogPrimitive.Overlay.displayName
 
 const DialogContent = React.forwardRef<
@@ -103,7 +106,7 @@ const DialogDescription = React.forwardRef<
     className={cn("text-sm text-muted-foreground", className)}
     {...props}
   />
-))
+));
 DialogDescription.displayName = DialogPrimitive.Description.displayName
 
 export {

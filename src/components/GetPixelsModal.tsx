@@ -51,7 +51,7 @@ export default function GetPixelsModal({ isOpen, onClose }: GetPixelsModalProps)
   const handlePixelsChange = (value: string) => {
     setPixelsWanted(value);
     if (value && !isNaN(Number(value))) {
-      const vibey = Number(value) / VIBEY_TO_PIXELS_RATE;
+      const vibey = Number(value) * 10;
       setVibeyToBurn(vibey.toString());
     } else {
       setVibeyToBurn('');
@@ -164,11 +164,14 @@ export default function GetPixelsModal({ isOpen, onClose }: GetPixelsModalProps)
 
   // Fetch price when tab changes to Buy VIBEY
   useEffect(() => {
-    if (activeTab === 'vibey') {
+    if (activeTab === "vibey") {
       // Set a default amount to show price
-      setBuyAmount('0.1');
+      setBuyAmount("0.01");
       fetchVibeyPriceData();
-      fetchVibeyPrice(0.1);
+      fetchVibeyPrice(0.01);
+    } else if (activeTab === "pixels") {
+      // Set default pixels value
+      handlePixelsChange("10");
     }
   }, [activeTab]);
 
@@ -252,10 +255,9 @@ export default function GetPixelsModal({ isOpen, onClose }: GetPixelsModalProps)
         message: `Successfully bought VIBEY tokens worth ${buyAmount} SOL!`,
         type: "success",
       });
-      
-      setBuyAmount('0.1'); // Reset to default
+
+      setBuyAmount("0.01"); // Reset to default
       setEstimatedTokens(0);
-      
     } catch (error) {
       console.error('Buy error:', error);
       addToast({
@@ -318,7 +320,7 @@ export default function GetPixelsModal({ isOpen, onClose }: GetPixelsModalProps)
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="sm:max-w-md w-[calc(100vw-24px)] md:w-full">
+      <DialogContent className=" bg-[#1A1A1A]/95 border border-white/40 sm:max-w-md w-[calc(100vw-24px)] md:w-full">
         <DialogHeader>
           <DialogTitle className="text-white">
             {/* Removed "Buy Pixels" heading */}
@@ -328,57 +330,70 @@ export default function GetPixelsModal({ isOpen, onClose }: GetPixelsModalProps)
         {/* Toggle Tabs */}
         <div className="flex mb-4">
           <button
-            onClick={() => setActiveTab('vibey')}
+            onClick={() => setActiveTab("vibey")}
             className={`flex-1 py-3 px-4 rounded-l-md text-sm font-medium transition-all ${
-              activeTab === 'vibey'
-                ? 'bg-black text-transparent bg-clip-text'
-                : 'bg-[#1A1A1A] text-gray-300 hover:text-white'
+              activeTab === "vibey"
+                ? "bg-black text-transparent bg-clip-text"
+                : "bg-black text-gray-300 hover:text-white"
             }`}
-            style={activeTab === 'vibey' ? {
-              background: 'linear-gradient(to right, #EE05E7, #EE5705)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              border: '2px solid',
-              borderImage: 'linear-gradient(to right, #EE05E7, #EE5705) 1'
-            } : {}}
+            style={
+              activeTab === "vibey"
+                ? {
+                    background: "linear-gradient(to right, #EE05E7, #EE5705)",
+                    WebkitBackgroundClip: "text",
+                    WebkitTextFillColor: "transparent",
+                    border: "2px solid",
+                    borderImage:
+                      "linear-gradient(to right, #EE05E7, #EE5705) 1",
+                  }
+                : {}
+            }
           >
             Buy $VIBEY
           </button>
           <button
-            onClick={() => setActiveTab('pixels')}
+            onClick={() => setActiveTab("pixels")}
             className={`flex-1 py-3 px-4 rounded-r-md text-sm font-medium transition-all ${
-              activeTab === 'pixels'
-                ? 'bg-black text-transparent bg-clip-text'
-                : 'bg-[#1A1A1A] text-gray-300 hover:text-white'
+              activeTab === "pixels"
+                ? "bg-black text-transparent bg-clip-text"
+                : "bg-black text-gray-300 hover:text-white"
             }`}
-            style={activeTab === 'pixels' ? {
-              background: 'linear-gradient(to right, #EE05E7, #EE5705)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              border: '2px solid',
-              borderImage: 'linear-gradient(to right, #EE05E7, #EE5705) 1'
-            } : {}}
+            style={
+              activeTab === "pixels"
+                ? {
+                    background: "linear-gradient(to right, #EE05E7, #EE5705)",
+                    WebkitBackgroundClip: "text",
+                    WebkitTextFillColor: "transparent",
+                    border: "2px solid",
+                    borderImage:
+                      "linear-gradient(to right, #EE05E7, #EE5705) 1",
+                  }
+                : {}
+            }
           >
             Buy Pixels
           </button>
         </div>
 
         {/* Buy VIBEY Section */}
-        {activeTab === 'vibey' && (
+        {activeTab === "vibey" && (
           <div className="space-y-4">
             {/* Live VIBEY Price Display */}
-            <div className="bg-[#1A1A1A] rounded-lg p-4 text-center">
+            <div className="bg-black rounded-lg p-4 text-center">
               <div className="text-sm text-white font-medium">
-                1 VIBEY = ${vibeyPriceUSD > 0 ? vibeyPriceUSD.toFixed(6) : '0.000000'}
+                1 VIBEY = $
+                {vibeyPriceUSD > 0 ? vibeyPriceUSD.toFixed(6) : "0.000000"}
               </div>
             </div>
 
             {/* Buy Dialog - Always Visible */}
-            <div className="w-full bg-background/95 backdrop-blur-sm border border-border/50 rounded-lg p-4 shadow-lg">
+            <div className="w-full bg-[#1A1A1A]/95 backdrop-blur-sm border border-white/20 rounded-lg p-4 shadow-lg">
               <div className="flex flex-col gap-4">
                 {/* Amount Input */}
                 <div className="space-y-2">
-                  <Label className="text-sm font-medium text-gray-300">Amount in SOL</Label>
+                  <Label className="text-sm font-medium text-gray-300">
+                    Amount in SOL
+                  </Label>
                   <Input
                     type="number"
                     placeholder="0.0"
@@ -421,8 +436,12 @@ export default function GetPixelsModal({ isOpen, onClose }: GetPixelsModalProps)
                 {/* Estimated Tokens */}
                 {buyAmount && Number(buyAmount) > 0 && (
                   <div className="text-sm text-gray-300">
-                    You'll receive approximately: <span className="font-semibold text-white">
-                      {vibeyPriceSOL > 0 ? (Number(buyAmount) * (1 / vibeyPriceSOL)).toFixed(6) : '...'} VIBEY
+                    You'll receive approximately:{" "}
+                    <span className="font-semibold text-white">
+                      {vibeyPriceSOL > 0
+                        ? (Number(buyAmount) * (1 / vibeyPriceSOL)).toFixed(6)
+                        : "..."}{" "}
+                      VIBEY
                     </span>
                   </div>
                 )}
@@ -448,14 +467,14 @@ export default function GetPixelsModal({ isOpen, onClose }: GetPixelsModalProps)
         {activeTab === 'pixels' && (
           <div className="space-y-4">
             {/* Live Pixel Price Display */}
-            <div className="bg-[#1A1A1A] rounded-lg p-4 text-center">
+            <div className="bg-black rounded-lg p-4 text-center">
               <div className="text-sm text-white font-medium">
-                1 Pixel = ${vibeyPriceUSD > 0 ? (vibeyPriceUSD / VIBEY_TO_PIXELS_RATE).toFixed(6) : '0.000000'}
+                1 Pixel = 10 $VIBEY
               </div>
             </div>
 
             {/* Buy Dialog - Always Visible */}
-            <div className="w-full bg-background/95 backdrop-blur-sm border border-border/50 rounded-lg p-4 shadow-lg">
+            <div className="w-full bg-[#1A1A1A]/95 backdrop-blur-sm border border-white/20 rounded-lg p-4 shadow-lg">
               <div className="flex flex-col gap-4">
                 {/* Pixels Input */}
                 <div className="space-y-2">
@@ -483,18 +502,10 @@ export default function GetPixelsModal({ isOpen, onClose }: GetPixelsModalProps)
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => handlePixelsChange("10")}
+                    onClick={() => handlePixelsChange("25")}
                     className="flex-1 text-xs h-8 bg-white/10 border-white/20 text-white hover:bg-white/20"
                   >
-                    10 PX
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handlePixelsChange("30")}
-                    className="flex-1 text-xs h-8 bg-white/10 border-white/20 text-white hover:bg-white/20"
-                  >
-                    30 PX
+                    25 PX
                   </Button>
                   <Button
                     variant="outline"
@@ -504,14 +515,24 @@ export default function GetPixelsModal({ isOpen, onClose }: GetPixelsModalProps)
                   >
                     50 PX
                   </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handlePixelsChange("100")}
+                    className="flex-1 text-xs h-8 bg-white/10 border-white/20 text-white hover:bg-white/20"
+                  >
+                    100 PX
+                  </Button>
                 </div>
 
                 {/* VIBEY to Burn Display */}
                 {pixelsWanted && Number(pixelsWanted) > 0 && (
                   <div className="text-sm text-gray-300">
-                    You will burn <span className="font-semibold text-white">
+                    You will burn{" "}
+                    <span className="font-semibold text-white">
                       {vibeyToBurn} $VIBEY
-                    </span> to get these pixels
+                    </span>{" "}
+                    to get these pixels
                   </div>
                 )}
               </div>
@@ -523,8 +544,8 @@ export default function GetPixelsModal({ isOpen, onClose }: GetPixelsModalProps)
               disabled={isSubmitting || !pixelsWanted || !vibeyToBurn}
               className="w-full h-12 text-lg font-medium text-white"
               style={{
-                background: 'linear-gradient(to right, #EE05E7, #EE5705)',
-                border: 'none'
+                background: "linear-gradient(to right, #EE05E7, #EE5705)",
+                border: "none",
               }}
             >
               {isSubmitting ? (
