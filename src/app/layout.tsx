@@ -18,9 +18,9 @@ export const metadata: Metadata = {
   title: 'Pixey by VibeGame',
   description: 'Create pixel art on VibeGame powered by Solana',
   icons: {
-    icon: '/image.png',
-    shortcut: '/image.png',
-    apple: '/image.png',
+    icon: '/img.svg',
+    shortcut: '/img.svg',
+    apple: '/img.svg',
   },
   openGraph: {
     title: 'Pixey by VibeGame',

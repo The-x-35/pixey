@@ -327,6 +327,18 @@ export default function GetPixelsModal({ isOpen, onClose }: GetPixelsModalProps)
           </DialogTitle>
         </DialogHeader>
         
+        {/* Heading above toggle */}
+        <div className="text-center mb-4">
+          <h3 className="text-white text-lg font-semibold">
+            <span style={{
+              background: "linear-gradient(to right, #EE05E7, #EE5705)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              backgroundClip: "text"
+            }}>$VIBEY</span> helps you get Pixels
+          </h3>
+        </div>
+        
         {/* Toggle Tabs */}
         <div className="flex mb-4">
           <button
