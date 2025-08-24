@@ -181,19 +181,41 @@ const useGameStore = create<GameStore>()(
           const newPixels = { ...state.pixelBoard.pixels };
           newPixels[`${x},${y}`] = newPixel;
           
+          // Get penalty information from response
+          const pixelsDeducted = result.data.pixels_deducted || 1;
+          const wasOverwrite = result.data.was_overwrite || false;
+          
+          // Update local state with correct pixel count from server
+          const updatedUser = {
+            ...user,
+            free_pixels: result.data.user_pixels_remaining,
+            total_pixels_placed: user.total_pixels_placed + 1,
+          };
+          
           set({
             pixelBoard: {
               ...state.pixelBoard,
               pixels: newPixels,
             },
-            user: {
-              ...user,
-              free_pixels: user.free_pixels - 1,
-              total_pixels_placed: user.total_pixels_placed + 1,
-            },
+            user: updatedUser,
             selectedPixel: null,
           });
           
+          // Show appropriate toast message
+          if (wasOverwrite) {
+            state.addToast({
+              message: `Pixel overwritten! -${pixelsDeducted} pixels`,
+              type: 'warning',
+            });
+          } else {
+            state.addToast({
+              message: `Pixel placed! -${pixelsDeducted} pixels`,
+              type: 'success',
+            });
+          }
+          
+          // Force a re-render by updating user state again
+          set({ user: updatedUser });
 
         } else {
           state.addToast({

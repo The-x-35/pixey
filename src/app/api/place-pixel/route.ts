@@ -30,11 +30,21 @@ export async function POST(request: NextRequest) {
       }
 
       const user = userResult.rows[0];
-      if (user.free_pixels <= 0) {
-        throw new Error('No pixels available');
+      
+      // 2. Check if pixel already exists at this location
+      const existingPixelResult = await client.query(
+        'SELECT wallet_address FROM pixey_pixels WHERE x_coordinate = $1 AND y_coordinate = $2',
+        [x, y]
+      );
+      
+      const pixelExists = existingPixelResult.rows.length > 0;
+      const pixelsToDeduct = pixelExists ? 2 : 1; // -2 if overwriting, -1 if new pixel
+      
+      if (user.free_pixels < pixelsToDeduct) {
+        throw new Error(`Not enough pixels available. Need ${pixelsToDeduct} pixels.`);
       }
 
-      // 2. Place pixel (handles conflicts with UNIQUE constraint)
+      // 3. Place pixel (handles conflicts with UNIQUE constraint)
       await client.query(`
         INSERT INTO pixey_pixels (x_coordinate, y_coordinate, color, wallet_address) 
         VALUES ($1, $2, $3, $4)
@@ -42,22 +52,22 @@ export async function POST(request: NextRequest) {
         DO UPDATE SET color = $3, wallet_address = $4, placed_at = NOW()
       `, [x, y, color, wallet_address]);
 
-      // 3. Update user stats
+      // 4. Update user stats with appropriate pixel deduction
       await client.query(`
         UPDATE pixey_users 
-        SET free_pixels = free_pixels - 1,
+        SET free_pixels = free_pixels - $1,
             total_pixels_placed = total_pixels_placed + 1,
             updated_at = NOW()
-        WHERE wallet_address = $1
-      `, [wallet_address]);
+        WHERE wallet_address = $2
+      `, [pixelsToDeduct, wallet_address]);
 
-      // 4. Record pixel history
+      // 5. Record pixel history
       await client.query(`
         INSERT INTO pixey_pixel_history (x_coordinate, y_coordinate, new_color, wallet_address)
         VALUES ($1, $2, $3, $4)
       `, [x, y, color, wallet_address]);
 
-      // 5. Send notification to all users about the new pixel
+      // 6. Send notification to all users about the new pixel
       const allUsersResult = await client.query(
         'SELECT wallet_address FROM pixey_users WHERE wallet_address != $1',
         [wallet_address]
@@ -89,6 +99,8 @@ export async function POST(request: NextRequest) {
         data: {
           pixel: { x, y, color, wallet_address, placed_at: new Date() },
           user_pixels_remaining: updatedUser.rows[0].free_pixels,
+          pixels_deducted: pixelsToDeduct,
+          was_overwrite: pixelExists,
         },
       });
 
