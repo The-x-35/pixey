@@ -161,6 +161,17 @@ function GameContent() {
                 />
               ))}
             </div>
+            
+            {/* Custom Color Picker */}
+            <div className="flex items-center gap-2">
+              <input
+                type="color"
+                value={selectedColor}
+                onChange={(e) => setSelectedColor(e.target.value)}
+                className="w-9 h-9 md:w-10 md:h-10 rounded-lg border-2 border-[#262626] cursor-pointer transition-all duration-200 hover:scale-110"
+                title="Pick custom color"
+              />
+            </div>
           </div>
             
           {/* Place Pixel Button - Below colors on mobile, beside on desktop */}

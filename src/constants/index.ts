@@ -75,7 +75,6 @@ export const PIXEL_COLORS = [
   '#FF69B4', // Hot Pink
   '#800080', // Purple
   '#008000', // Dark Green
-  '#008080', // Teal
   '#A52A2A', // Brown
   '#C0C0C0', // Silver
   '#FFFFFF', // White
