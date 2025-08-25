@@ -384,7 +384,7 @@ export default function PixelBoard({ className, selectedPixel, onPixelSelect }: 
       />
       
       {/* Zoom controls */}
-      <div className="absolute bottom-40 md:bottom-10 right-4 flex flex-col space-y-2">
+      <div className="absolute bottom-40 md:bottom-20 right-4 flex flex-col space-y-2">
         <button
           onClick={() => setViewport(prev => ({ 
             ...prev, 

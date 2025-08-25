@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { useEffect, useState } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
@@ -106,8 +106,17 @@ function GameContent() {
       <ToastContainer />
       
       {/* Navbar */}
-      <Navbar isAuthenticated={isAuthenticated} onMobileMenuChange={setIsMobileMenuOpen} />
-      
+      <Navbar
+        isAuthenticated={isAuthenticated}
+        onMobileMenuChange={setIsMobileMenuOpen}
+      />
+      {/* Airdrop Announcement */}
+      <div className="mx-4 mt-2 mb-1">
+        <div className="w-full text-center text-white font-semibold bg-EE5705/10 rounded-lg p-2 border border-white/20 text-xs sm:text-sm">
+          🚀 AIRDROP FOR THE TOP 10 ON THE LEADERBOARD
+        </div>
+      </div>
+
       {/* Main Game Layout */}
       <div className={`flex h-[calc(100vh-120px)] ${isCommentsVisible ? '' : 'justify-center'}`}>
         {/* Center - Pixel Board */}
@@ -215,7 +224,7 @@ function GameContent() {
       {!isCommentsVisible && !isMobileMenuOpen && (
         <button
           onClick={() => setIsCommentsVisible(true)}
-          className="fixed top-28 right-4 z-50 text-white p-3 rounded-full shadow-lg transition-all duration-200 hover:scale-110"
+          className="fixed top-36 right-4 z-50 text-white p-3 rounded-full shadow-lg transition-all duration-200 hover:scale-110"
           style={{
             background: 'linear-gradient(to right, #EE00FF 0%, #EE5705 66%, #EE05E7 100%)',
             color: 'white',
@@ -238,7 +247,7 @@ function GameContent() {
       {!isCommentsVisible && !isMobileMenuOpen && (
         <button
           onClick={openStats}
-          className="fixed top-44 right-4 z-50 text-white p-3 rounded-full shadow-lg transition-all duration-200 hover:scale-110"
+          className="fixed top-52 right-4 z-50 text-white p-3 rounded-full shadow-lg transition-all duration-200 hover:scale-110"
           style={{
             background: 'linear-gradient(to right, #EE00FF 0%, #EE5705 66%, #EE05E7 100%)',
             color: 'white',
