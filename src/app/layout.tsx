@@ -27,7 +27,7 @@ export const metadata: Metadata = {
     description: 'Create pixel art on VibeGame powered by Solana',
     images: [
       {
-        url: '/og1.png',
+        url: '/og-2.png',
         width: 1200,
         height: 630,
         alt: 'Pixey - Pixel Art Game',
@@ -38,7 +38,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Pixey by VibeGame',
     description: 'Create pixel art on VibeGame powered by Solana',
-    images: ['/og1.png'],
+    images: ['/og-2.png'],
   },
   viewport: {
     width: 'device-width',
