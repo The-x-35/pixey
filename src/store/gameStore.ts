@@ -181,9 +181,11 @@ const useGameStore = create<GameStore>()(
           const newPixels = { ...state.pixelBoard.pixels };
           newPixels[`${x},${y}`] = newPixel;
           
-          // Get penalty information from response
+          // Get penalty and easter egg information from response
           const pixelsDeducted = result.data.pixels_deducted || 1;
           const wasOverwrite = result.data.was_overwrite || false;
+          const easterEggFound = result.data.easter_egg_found || false;
+          const easterEggReward = result.data.easter_egg_reward || 0;
           
           // Update local state with correct pixel count from server
           const updatedUser = {
@@ -202,7 +204,12 @@ const useGameStore = create<GameStore>()(
           });
           
           // Show appropriate toast message
-          if (wasOverwrite) {
+          if (easterEggFound) {
+            state.addToast({
+              message: `🎉 EASTER EGG FOUND! +${easterEggReward} free pixels!`,
+              type: 'success',
+            });
+          } else if (wasOverwrite) {
             state.addToast({
               message: `Pixel overwritten! -${pixelsDeducted} pixels`,
               type: 'warning',

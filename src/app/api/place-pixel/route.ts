@@ -52,22 +52,55 @@ export async function POST(request: NextRequest) {
         DO UPDATE SET color = $3, wallet_address = $4, placed_at = NOW()
       `, [x, y, color, wallet_address]);
 
-      // 4. Update user stats with appropriate pixel deduction
-      await client.query(`
-        UPDATE pixey_users 
-        SET free_pixels = free_pixels - $1,
-            total_pixels_placed = total_pixels_placed + 1,
-            updated_at = NOW()
-        WHERE wallet_address = $2
-      `, [pixelsToDeduct, wallet_address]);
+      // 4. Check for easter egg at this coordinate
+      const easterEggResult = await client.query(
+        'SELECT * FROM pixey_easter_eggs WHERE x_coordinate = $1 AND y_coordinate = $2 AND is_claimed = FALSE',
+        [x, y]
+      );
+      
+      let easterEggReward = 0;
+      let easterEggId = null;
+      
+      if (easterEggResult.rows.length > 0) {
+        const easterEgg = easterEggResult.rows[0];
+        easterEggReward = easterEgg.reward_pixels;
+        easterEggId = easterEgg.id;
+        
+        // Mark easter egg as claimed
+        await client.query(
+          'UPDATE pixey_easter_eggs SET is_claimed = TRUE, claimed_by_wallet = $1, claimed_at = NOW() WHERE id = $2',
+          [wallet_address, easterEggId]
+        );
+      }
+      
+      // 5. Update user stats with appropriate pixel deduction and easter egg reward
+      if (easterEggReward > 0) {
+        // Easter egg found - give reward directly
+        await client.query(`
+          UPDATE pixey_users 
+          SET free_pixels = free_pixels + $1,
+              total_pixels_placed = total_pixels_placed + 1,
+              updated_at = NOW()
+          WHERE wallet_address = $2
+        `, [easterEggReward, wallet_address]);
+      } else {
+        // Normal pixel placement - deduct pixels
+        await client.query(`
+          UPDATE pixey_users 
+          SET free_pixels = free_pixels - $1,
+              total_pixels_placed = total_pixels_placed + 1,
+              updated_at = NOW()
+          WHERE wallet_address = $2
+        `, [pixelsToDeduct, wallet_address]);
+      }
 
-      // 5. Record pixel history
+      // 6. Record pixel history
       await client.query(`
         INSERT INTO pixey_pixel_history (x_coordinate, y_coordinate, new_color, wallet_address)
         VALUES ($1, $2, $3, $4)
       `, [x, y, color, wallet_address]);
 
-      // 6. Send notification to all users about the new pixel
+      // 7. Send notification to all users about the new pixel
       const allUsersResult = await client.query(
         'SELECT wallet_address FROM pixey_users WHERE wallet_address != $1',
         [wallet_address]
@@ -101,6 +134,8 @@ export async function POST(request: NextRequest) {
           user_pixels_remaining: updatedUser.rows[0].free_pixels,
           pixels_deducted: pixelsToDeduct,
           was_overwrite: pixelExists,
+          easter_egg_found: easterEggReward > 0,
+          easter_egg_reward: easterEggReward,
         },
       });
 
