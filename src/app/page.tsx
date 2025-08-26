@@ -29,6 +29,9 @@ function GameContent() {
   const [selectedPixel, setSelectedPixel] = useState<{ x: number; y: number } | null>(null);
   const [showTopPlayers, setShowTopPlayers] = useState(false);
   const [topPlayers, setTopPlayers] = useState<Array<{wallet_address: string, total_pixels_placed: number, free_pixels: number, total_tokens_burned: string, username?: string, profile_picture?: string}>>([]);
+  const [allUsers, setAllUsers] = useState<Array<{wallet_address: string, total_pixels_placed: number, free_pixels: number, total_tokens_burned: string, username?: string, profile_picture?: string}>>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [showGetPixels, setShowGetPixels] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isPlacingPixel, setIsPlacingPixel] = useState(false);
@@ -45,13 +48,37 @@ function GameContent() {
         if (result.success && result.data) {
           const sortedUsers = result.data
             .filter((user: any) => user.total_pixels_placed > 0)
-            .slice(0, 10);
-          setTopPlayers(sortedUsers);
+            .sort((a: any, b: any) => b.total_pixels_placed - a.total_pixels_placed);
+          setAllUsers(sortedUsers);
+          setTopPlayers(sortedUsers.slice(0, 10));
+          setCurrentPage(1);
         }
       }
     } catch (error) {
       console.error('Error fetching top players:', error);
     }
+  };
+
+  // Load more users
+  const loadMoreUsers = () => {
+    if (isLoadingMore) return;
+    
+    setIsLoadingMore(true);
+    const nextPage = currentPage + 1;
+    const startIndex = (nextPage - 1) * 10;
+    const endIndex = startIndex + 10;
+    
+    const newUsers = allUsers.slice(startIndex, endIndex);
+    if (newUsers.length > 0) {
+      setTopPlayers(prev => [...prev, ...newUsers]);
+      setCurrentPage(nextPage);
+    }
+    setIsLoadingMore(false);
+  };
+
+  // Check if more users can be loaded
+  const hasMoreUsers = () => {
+    return topPlayers.length < allUsers.length;
   };
 
   const openStats = () => {
@@ -287,33 +314,60 @@ function GameContent() {
           
           <div className="space-y-4">
             {topPlayers.length > 0 ? (
-              topPlayers.map((player, index) => (
-                <Card key={player.wallet_address} className="bg-white/5 border-white/10">
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-3">
-                        <div className="flex items-center justify-center w-8 h-8 bg-gradient-to-r from-yellow-400 to-yellow-600 rounded-full text-black font-bold text-sm">
-                          {index + 1}
-                        </div>
-                        <img
-                          src={player.profile_picture || `https://api.dicebear.com/9.x/pixel-art/svg?seed=${player.wallet_address}`}
-                          alt="Avatar"
-                          className="h-8 w-8 rounded-full"
-                        />
-                        <div>
-                          <div className="font-medium text-white">
-                            {player.username === player.wallet_address ? player.username.slice(0, 4) + '...' + player.username.slice(-4) : player.username}
+              <>
+                {topPlayers.map((player, index) => (
+                  <Card key={player.wallet_address} className="bg-white/5 border-white/10">
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-3">
+                          <div className="flex items-center justify-center w-8 h-8 bg-gradient-to-r from-yellow-400 to-yellow-600 rounded-full text-black font-bold text-sm">
+                            {index + 1}
+                          </div>
+                          <img
+                            src={player.profile_picture || `https://api.dicebear.com/9.x/pixel-art/svg?seed=${player.wallet_address}`}
+                            alt="Avatar"
+                            className="h-8 w-8 rounded-full"
+                          />
+                          <div>
+                            <div className="font-medium text-white">
+                              {player.username === player.wallet_address ? player.username.slice(0, 4) + '...' + player.username.slice(-4) : player.username}
+                            </div>
                           </div>
                         </div>
+                        <div className="text-right">
+                          <div className="text-sm text-gray-400">Placed pixels</div>
+                          <div className="font-medium text-white">{player.total_pixels_placed}</div>
+                        </div>
                       </div>
-                      <div className="text-right">
-                        <div className="text-sm text-gray-400">Placed pixels</div>
-                        <div className="font-medium text-white">{player.total_pixels_placed}</div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))
+                    </CardContent>
+                  </Card>
+                ))}
+                
+                {/* Load More Button */}
+                {hasMoreUsers() && (
+                  <div className="text-center py-4">
+                    <button
+                      onClick={loadMoreUsers}
+                      disabled={isLoadingMore}
+                      className="text-white px-6 py-2 rounded-lg font-medium transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                      style={{
+                        background: 'linear-gradient(to right, #EE00FF 0%, #EE5705 66%, #EE05E7 100%)',
+                        color: 'white',
+                        padding: '8px 24px',
+                        borderRadius: '8px',
+                        fontSize: '14px',
+                        fontWeight: '500',
+                        boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+                        transition: 'all 0.2s',
+                        border: 'none',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      {isLoadingMore ? 'Loading...' : 'Show All'}
+                    </button>
+                  </div>
+                )}
+              </>
             ) : (
               <div className="text-center py-8 text-gray-400">
                 No players found
