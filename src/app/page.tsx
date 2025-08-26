@@ -156,7 +156,6 @@ function GameContent() {
               ))}
             </div>
             
-            {/* Second row of colors + Color picker */}
             <div className="flex gap-1 md:gap-2">
               {PIXEL_COLORS.slice(Math.ceil(PIXEL_COLORS.length / 2)).map((color) => (
                 <button
@@ -170,6 +169,7 @@ function GameContent() {
                 />
               ))}
               
+              {/* Custom Color Picker - inline with second row */}
               <input
                 type="color"
                 value={selectedColor}
