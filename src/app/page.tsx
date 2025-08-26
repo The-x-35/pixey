@@ -31,6 +31,7 @@ function GameContent() {
   const [topPlayers, setTopPlayers] = useState<Array<{wallet_address: string, total_pixels_placed: number, free_pixels: number, total_tokens_burned: string, username?: string, profile_picture?: string}>>([]);
   const [showGetPixels, setShowGetPixels] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isPlacingPixel, setIsPlacingPixel] = useState(false);
   
   // Handle X connection and profile updates
   useXConnection();
@@ -88,11 +89,18 @@ function GameContent() {
       return;
     }
     
+    setIsPlacingPixel(true);
     try {
       await placePixel(selectedPixel.x, selectedPixel.y, selectedColor);
-      setSelectedPixel(null); // Clear selection after placing
+      setSelectedPixel(null);
     } catch (error) {
       console.error('Error placing pixel:', error);
+      addToast({
+        message: 'Failed to place pixel. Please try again.',
+        type: 'error',
+      });
+    } finally {
+      setIsPlacingPixel(false);
     }
   };
 
@@ -196,7 +204,7 @@ function GameContent() {
 
             <button
               onClick={handlePlacePixel}
-              disabled={!selectedPixel}
+              disabled={!selectedPixel || isPlacingPixel}
               className="text-white px-6 py-2 rounded-lg font-medium transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
               style={{
                 background: 'linear-gradient(to right, #EE00FF 0%, #EE5705 66%, #EE05E7 100%)',
@@ -211,7 +219,7 @@ function GameContent() {
                 cursor: 'pointer',
               }}
             >
-              Place Pixel
+              {isPlacingPixel ? 'Placing...' : 'Place Pixel'}
             </button>
           </div>
         </div>
