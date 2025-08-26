@@ -416,7 +416,7 @@ export default function Navbar({ className, isAuthenticated, onMobileMenuChange 
       // Step 3: Wait a moment for user to see the toast, then open X
       setTimeout(() => {
         const text = encodeURIComponent(
-          "Checkout my progress on pixey.vibegame.fun"
+          "Remember r/place?\n\nIt's on @solana by @vibegamefun now\n\nI'm drawing at: pixey.vibegame.fun"
         );
         const xUrl = `https://twitter.com/intent/tweet?text=${text}`;
         window.open(xUrl, "_blank", "width=600,height=400");
@@ -431,7 +431,7 @@ export default function Navbar({ className, isAuthenticated, onMobileMenuChange 
 
       // Fallback: open X without clipboard copy
       const text = encodeURIComponent(
-        "Checkout my progress on pixey.vibegame.fun"
+        "Remember r/place?\n\nIt's on @solana by @vibegamefun now\n\nI'm drawing at: pixey.vibegame.fun"
       );
       const xUrl = `https://twitter.com/intent/tweet?text=${text}`;
       window.open(xUrl, "_blank", "width=600,height=400");
