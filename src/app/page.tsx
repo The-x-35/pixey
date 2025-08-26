@@ -148,7 +148,7 @@ function GameContent() {
       {/* Airdrop Announcement */}
       <div className="mx-4 mt-2 mb-1">
         <div className="w-full text-center text-white font-semibold bg-EE5705/10 rounded-lg p-2 border border-white/20 text-xs sm:text-sm">
-          🚀 AIRDROP FOR THE TOP 10 ON THE LEADERBOARD
+          PRIZES FOR THE TOP 10 ON THE LEADERBOARD
         </div>
       </div>
 
