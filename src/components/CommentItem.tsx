@@ -93,21 +93,18 @@ export default function CommentItem({ comment }: CommentItemProps) {
   };
 
   return (
-    <div className="flex gap-4 p-4 rounded-lg border border-[#262626]">
+    <div className="flex gap-3 p-2 rounded-lg border border-[#262626]">
       <Avatar className="h-8 w-8">
         <AvatarImage src={getAvatarUrl(comment.wallet_address)} alt={comment.wallet_address} className="h-8 w-8" />
         <AvatarFallback className="text-xs">{getInitials(comment.wallet_address)}</AvatarFallback>
       </Avatar>
-      <div className="flex-1 space-y-1">
-        {/* Name and timestamp */}
+      <div className="flex-1 space-y-1 min-w-0">
+        {/* Name */}
         <div className="flex flex-col">
           <span className="font-medium leading-tight text-white">{shortenWallet(comment.wallet_address)}</span>
-          <span className="text-xs text-gray-400 leading-tight">
-            {formatDate(comment.created_at)}
-          </span>
         </div>
         {/* Comment text */}
-        <p className="text-sm break-words break-all whitespace-pre-line overflow-wrap-anywhere text-white">
+        <p className="text-sm break-words whitespace-pre-line text-white">
           {comment.content}
         </p>
       </div>

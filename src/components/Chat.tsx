@@ -115,7 +115,7 @@ export default function Chat({ className, onVisibilityChange }: ChatProps) {
     <div className={`flex flex-col h-full ${className}`}>
       {/* Header with title and close button */}
       <div className="flex items-center justify-between px-3 py-2 border-b border-[#262626]">
-        <h3 className="text-lg font-bold text-white" style={{ fontFamily: 'Matrix Sans, sans-serif' }}>Comments ({comments.length})</h3>
+        <h3 className="text-lg font-bold text-white" style={{ fontFamily: 'Matrix Sans, sans-serif' }}>Chats ({comments.length})</h3>
         <button
           onClick={() => {
             setIsVisible(false);
@@ -131,7 +131,7 @@ export default function Chat({ className, onVisibilityChange }: ChatProps) {
       </div>
 
       {/* Comments list */}
-      <div className="flex-1 overflow-y-auto space-y-4 pr-2 p-3">
+      <div className="flex-1 overflow-y-auto space-y-2 pr-2 p-2">
         {isLoading ? (
           <div className="flex items-center justify-center py-8">
             <Loader2 className="h-6 w-6 animate-spin text-purple-400" />

@@ -130,14 +130,14 @@ function GameContent() {
         
         {/* Right Sidebar - Chat */}
         {isCommentsVisible && (
-          <div className="w-80 p-4 border-l border-[#262626]">
+          <div className="w-80 p-2 border-l border-[#262626] relative z-40 bg-black/30 backdrop-blur-xl">
             <Chat className="h-full" onVisibilityChange={setIsCommentsVisible} />
           </div>
         )}
       </div>
       
       {/* Permanent Color Palette at Bottom */}
-      <div className="fixed bottom-0 left-0 right-0 bg-transparent backdrop-blur-md border-t border-[#262626] p-4 z-40">
+      <div className="fixed bottom-0 left-0 right-0 bg-transparent backdrop-blur-md border-t border-[#262626] p-4 z-30">
         <div className="flex flex-col md:flex-row items-center justify-center space-y-4 md:space-y-0 md:space-x-8">
           {/* Color Palette - 2 rows on mobile, 1 row on desktop */}
           <div className="flex flex-col items-center space-y-2 md:flex-row md:space-y-0 md:space-x-2">
