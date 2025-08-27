@@ -338,6 +338,61 @@ export default function PixelBoard({ className, selectedPixel, onPixelSelect }: 
     }
   }, [pixelBoard.boardSize, viewport]);
 
+  // Download board function
+  const downloadBoard = useCallback(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    // Create a new canvas for the full board image
+    const downloadCanvas = document.createElement('canvas');
+    const ctx = downloadCanvas.getContext('2d');
+    if (!ctx) return;
+
+    // Set canvas size to the full board dimensions
+    const boardPixelSize = 10;
+    downloadCanvas.width = pixelBoard.boardSize * boardPixelSize;
+    downloadCanvas.height = pixelBoard.boardSize * boardPixelSize;
+
+    // Fill background
+    ctx.fillStyle = '#000000';
+    ctx.fillRect(0, 0, downloadCanvas.width, downloadCanvas.height);
+
+    // Draw all pixels
+    for (let x = 0; x < pixelBoard.boardSize; x++) {
+      for (let y = 0; y < pixelBoard.boardSize; y++) {
+        const pixel = pixelBoard.pixels[`${x},${y}`];
+        if (pixel) {
+          ctx.fillStyle = pixel.color;
+          ctx.fillRect(x * boardPixelSize, y * boardPixelSize, boardPixelSize, boardPixelSize);
+        }
+      }
+    }
+
+    // Draw grid lines
+    ctx.strokeStyle = '#333333';
+    ctx.lineWidth = 1;
+    
+    for (let x = 0; x <= pixelBoard.boardSize; x++) {
+      ctx.beginPath();
+      ctx.moveTo(x * boardPixelSize, 0);
+      ctx.lineTo(x * boardPixelSize, downloadCanvas.height);
+      ctx.stroke();
+    }
+    
+    for (let y = 0; y <= pixelBoard.boardSize; y++) {
+      ctx.beginPath();
+      ctx.moveTo(0, y * boardPixelSize);
+      ctx.lineTo(downloadCanvas.width, y * boardPixelSize);
+      ctx.stroke();
+    }
+
+    // Create download link
+    const link = document.createElement('a');
+    link.download = `pixel_board_stage${pixelBoard.currentStage}_${new Date().toISOString().split('T')[0]}.png`;
+    link.href = downloadCanvas.toDataURL('image/png');
+    link.click();
+  }, [pixelBoard]);
+
   // Effects
   useEffect(() => {
     resizeCanvas();
@@ -461,6 +516,25 @@ export default function PixelBoard({ className, selectedPixel, onPixelSelect }: 
           title="Reset View"
         >
           Reset
+        </button>
+        <button
+          onClick={() => downloadBoard()}
+          className="text-white p-3 rounded-full shadow-lg transition-all duration-200 hover:scale-110"
+          style={{
+            background: 'linear-gradient(to right, #EE00FF 0%, #EE5705 66%, #EE05E7 100%)',
+            color: 'white',
+            padding: '12px',
+            borderRadius: '50%',
+            boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+            transition: 'all 0.2s',
+            border: 'none',
+            cursor: 'pointer',
+          }}
+          title="Download Board"
+        >
+          <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+          </svg>
         </button>
       </div>
 
