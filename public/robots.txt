@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+
+# Allow Open Graph image generation
+Allow: /api/og
