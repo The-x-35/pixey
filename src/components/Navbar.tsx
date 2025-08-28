@@ -86,8 +86,6 @@ export default function Navbar({ className, isAuthenticated, onMobileMenuChange 
 
   // Debug: Log when user data changes
   useEffect(() => {
-    console.log('Navbar - User data changed:', user);
-    console.log('Navbar - Username changed:', user?.username);
   }, [user]);
 
   // Fetch user data when wallet connects
@@ -100,7 +98,6 @@ export default function Navbar({ className, isAuthenticated, onMobileMenuChange 
             const result = await response.json();
             if (result.success && result.data.length > 0) {
               const userData = result.data[0];
-              console.log('Navbar - Fetched user data:', userData);
               // Update the store with user data
               useGameStore.getState().setUser(userData);
             }
@@ -117,7 +114,6 @@ export default function Navbar({ className, isAuthenticated, onMobileMenuChange 
   // Auto-disconnect X if session exists but username not in database
   useEffect(() => {
     if (session?.user?.username && user && (!user.username || user.username === user.wallet_address)) {
-      console.log('Navbar - Auto-disconnecting X: session exists but username not in database');
       signOut({ callbackUrl: window.location.origin });
     }
   }, [session, user, signOut]);
@@ -209,11 +205,6 @@ export default function Navbar({ className, isAuthenticated, onMobileMenuChange 
       navigator.clipboard.writeText(publicKey.toString());
     }
   };
-
-  // Debug: Log user data
-  console.log('Navbar - User data:', user);
-  console.log('Navbar - Username:', user?.username);
-  console.log('Navbar - Session:', session);
 
   const shareProfileCard = async () => {
     if (!publicKey) return;

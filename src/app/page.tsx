@@ -18,6 +18,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { getTotalBurnedTokens } from '@/constants';
 import GetPixelsModal from '@/components/GetPixelsModal';
 import { Button } from '@/components/ui/button';
+import PixelBot from '@/components/PixelBot';
 
 function GameContent() {
   const { publicKey, connected } = useWallet();
@@ -25,6 +26,7 @@ function GameContent() {
   const { placePixel, addToast } = useGameStore();
   const { isAuthenticated, isAuthenticating } = useWalletAuth();
   const [isCommentsVisible, setIsCommentsVisible] = useState(false);
+  const [isPixelBotOpen, setIsPixelBotOpen] = useState(false);
   const [selectedColor, setSelectedColor] = useState<string>(PIXEL_COLORS[0]);
   const [selectedPixel, setSelectedPixel] = useState<{ x: number; y: number } | null>(null);
   const [showTopPlayers, setShowTopPlayers] = useState(false);
@@ -159,12 +161,20 @@ function GameContent() {
           <PixelBoard 
             className="w-full h-full" 
             selectedPixel={selectedPixel}
-            onPixelSelect={setSelectedPixel}
+            onPixelSelect={(pixel) => {
+              setSelectedPixel(pixel);
+              // Dispatch custom event for PixelBot to listen to
+              if (pixel) {
+                const event = new CustomEvent('pixelSelected', { detail: pixel });
+                document.dispatchEvent(event);
+              }
+            }}
           />
+          <PixelBot onVisibilityChange={setIsPixelBotOpen} />
         </div>
         
         {/* Right Sidebar - Chat */}
-        {isCommentsVisible && (
+        {isCommentsVisible && !isPixelBotOpen && (
           <div className="w-80 p-2 border-l border-[#262626] relative z-40 bg-black/30 backdrop-blur-xl">
             <Chat className="h-full" onVisibilityChange={setIsCommentsVisible} />
           </div>
@@ -252,8 +262,8 @@ function GameContent() {
         </div>
       </div>
       
-      {/* Floating Chat Button - Only show when comments are closed and mobile menu is closed */}
-      {!isCommentsVisible && !isMobileMenuOpen && (
+      {/* Floating Chat Button - Only show when comments are closed, mobile menu is closed, and PixelBot is closed */}
+      {!isCommentsVisible && !isMobileMenuOpen && !isPixelBotOpen && (
         <button
           onClick={() => setIsCommentsVisible(true)}
           className="fixed top-36 right-4 z-50 text-white p-3 rounded-full shadow-lg transition-all duration-200 hover:scale-110"
@@ -276,7 +286,7 @@ function GameContent() {
       )}
 
       {/* Floating Leaderboard Button - Only show when comments are closed and mobile menu is closed */}
-      {!isCommentsVisible && !isMobileMenuOpen && (
+      {!isCommentsVisible && !isMobileMenuOpen && !isPixelBotOpen && (
         <button
           onClick={openStats}
           className="fixed top-52 right-4 z-50 text-white p-3 rounded-full shadow-lg transition-all duration-200 hover:scale-110"

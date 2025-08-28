@@ -414,7 +414,7 @@ export default function PixelBoard({ className, selectedPixel, onPixelSelect }: 
   return (
     <div 
       ref={containerRef} 
-      className={cn("w-full h-full relative overflow-hidden rounded-lg border border-[#262626]", className)}
+      className={cn("w-full h-full relative overflow-hidden rounded-lg border border-[#262626] pixel-board-container", className)}
       style={{
         touchAction: 'none',
       }}
