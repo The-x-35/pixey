@@ -3,6 +3,17 @@ import { db } from '@/lib/database';
 
 export async function POST(request: NextRequest) {
   try {
+    // CORS check - only allow pixey.vibegame.fun and localhost
+    const origin = request.headers.get('origin');
+    const allowedOrigins = ['https://pixey.vibegame.fun', 'http://localhost:3000', 'http://localhost:3001'];
+    
+    if (!origin || !allowedOrigins.includes(origin)) {
+      return NextResponse.json({
+        success: false,
+        error: 'Unauthorized origin',
+      }, { status: 403 });
+    }
+
     const { x, y, color, wallet_address } = await request.json();
 
     // Validate inputs
@@ -19,10 +30,10 @@ export async function POST(request: NextRequest) {
     try {
       await client.query('BEGIN');
 
-      // 1. Check if user has available pixels
+      // 1. Check if user has available pixels (with row lock to prevent race conditions)
       let queryStart = Date.now();
       const userResult = await client.query(
-        'SELECT free_pixels FROM pixey_users WHERE wallet_address = $1',
+        'SELECT free_pixels FROM pixey_users WHERE wallet_address = $1 FOR UPDATE',
         [wallet_address]
       );
       console.log(`User query: ${Date.now() - queryStart}ms`);
