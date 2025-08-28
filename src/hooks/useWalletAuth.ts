@@ -53,9 +53,10 @@ export const useWalletAuth = () => {
         setUser(result.data.user);
         setIsAuthenticated(true);
         
-        // Store authentication in localStorage
+        // Store authentication and JWT token in localStorage
         const authData = {
           user: result.data.user,
+          token: result.data.token, // Store the JWT token
           timestamp: Date.now()
         };
         localStorage.setItem(`pixey_auth_${publicKey.toString()}`, JSON.stringify(authData));

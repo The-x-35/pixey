@@ -152,17 +152,31 @@ const useGameStore = create<GameStore>()(
       }
       
       try {
-        // Call API to place pixel
+        // Get JWT token from localStorage
+        const authKey = `pixey_auth_${user.wallet_address}`;
+        const storedAuth = localStorage.getItem(authKey);
+        const authData = storedAuth ? JSON.parse(storedAuth) : null;
+        const token = authData?.token;
+        
+        if (!token) {
+          state.addToast({
+            message: 'Authentication token expired. Please reconnect your wallet.',
+            type: 'error',
+          });
+          return;
+        }
+        
+        // Call API to place pixel with JWT token
         const response = await fetch('/api/place-pixel', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
           },
           body: JSON.stringify({
             x,
             y,
             color,
-            wallet_address: user.wallet_address,
           }),
         });
         

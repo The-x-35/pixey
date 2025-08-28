@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/database';
+import { verifyAuthToken } from '@/lib/jwt';
 
 export async function POST(request: NextRequest) {
   try {
@@ -14,10 +15,20 @@ export async function POST(request: NextRequest) {
       }, { status: 403 });
     }
 
-    const { x, y, color, wallet_address } = await request.json();
+    // Verify JWT authentication
+    const authResult = await verifyAuthToken(request);
+    if (!authResult.isValid) {
+      return NextResponse.json({
+        success: false,
+        error: authResult.error || 'Authentication required',
+      }, { status: 401 });
+    }
+
+    const { x, y, color } = await request.json();
+    const wallet_address = authResult.wallet_address; // Get wallet_address from verified JWT
 
     // Validate inputs
-    if (typeof x !== 'number' || typeof y !== 'number' || !color || !wallet_address) {
+    if (typeof x !== 'number' || typeof y !== 'number' || !color) {
       return NextResponse.json({
         success: false,
         error: 'Invalid input parameters',
